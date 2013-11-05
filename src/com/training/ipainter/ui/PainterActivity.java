@@ -3,21 +3,25 @@
  */
 package com.training.ipainter.ui;
 
-import com.training.ipainter.R;
 import android.app.Activity;
 import android.os.Bundle;
 
+import com.training.ipainter.R;
+
 /**
- * @author chenwei
  *
  */
 public class PainterActivity extends Activity {
+
+    private BoardCanvas mCanvas;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.main);
+
+        mCanvas = (BoardCanvas) findViewById(R.id.canvas);
     }
 
 }
