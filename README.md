@@ -1,0 +1,4 @@
+iPainter
+========
+
+A training project.
