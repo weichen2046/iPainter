@@ -4,7 +4,6 @@
 
     <com.training.ipainter.ui.BoardCanvas android:id="@+id/canvas"
         android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
-        android:background="#ffffff" />
+        android:layout_height="fill_parent" />
 
 </FrameLayout>

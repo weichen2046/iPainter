@@ -4,7 +4,6 @@
 package com.training.ipainter.model;
 
 import android.graphics.Canvas;
-import android.graphics.Paint;
 import android.graphics.Point;
 
 /**
@@ -20,8 +19,8 @@ public class Line extends GraphicObject {
      * @see com.training.ipainter.model.IDrawable#drawSelf(android.graphics.Canvas, android.graphics.Paint)
      */
     @Override
-    public void drawSelf(Canvas canvas, Paint paint) {
-        canvas.drawLine(mStart.x, mStart.y, mStop.x, mStop.y, paint);
+    public void drawSelf(Canvas canvas) {
+        // canvas.drawLine(mStart.x, mStart.y, mStop.x, mStop.y, paint);
     }
 
     @Override

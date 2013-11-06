@@ -3,8 +3,13 @@
  */
 package com.training.ipainter.core;
 
+import android.graphics.Paint;
+import android.graphics.PorterDuff.Mode;
+import android.graphics.PorterDuffXfermode;
 import android.util.Log;
 import android.view.SurfaceHolder;
+
+import com.training.ipainter.model.Rectangle;
 
 /**
  * @author chenwei
@@ -19,12 +24,10 @@ public class PaintPerformer {
 
     private boolean mIsActive;
 
-    private int mStartPointX;
-    private int mStartPointY;
-    private int mEndPointX;
-    private int mEndPointY;
-    private int mMovePointX;
-    private int mMovePointY;
+    private int mStartX;
+    private int mStartY;
+    private int mPrevX;
+    private int mPrevY;
 
     public PaintPerformer(SurfaceHolder holder) {
         mHolder = holder;
@@ -64,23 +67,42 @@ public class PaintPerformer {
         return mIsActive;
     }
 
-    public void doPaint() {
-        mThread.sendSignal();
+    private void doPaint(Signal signal) {
+        mThread.sendSignal(signal);
     }
 
     public void actionDown(int x, int y) {
-        mStartPointX = x;
-        mStartPointY = y;
-        doPaint();
+        // Signal sig = Signal.obtain();
+        // doPaint(sig);
+        mStartX = x;
+        mStartY = y;
+        mPrevX = x;
+        mPrevY = y;
     }
 
     public void actionUp(int x, int y) {
-        mEndPointX = x;
-        mEndPointY = y;
-        doPaint();
+        // Signal sig = Signal.obtain();
+        // doPaint(sig);
+        mStartX = 0;
+        mStartY = 0;
     }
 
     public void actionMove(int x, int y) {
-        doPaint();
+        Signal sig = Signal.obtain();
+        Rectangle rect = new Rectangle(mStartX, mStartY, x, y);
+        sig.setDrawable(rect);
+        Paint paint = rect.getPaint();
+        // erase origin
+        paint.setXfermode(new PorterDuffXfermode(Mode.XOR));
+        doPaint(sig);
+        // paint new
+        sig = Signal.obtain();
+        rect = new Rectangle(mStartX, mStartY, x, y);
+        sig.setDrawable(rect);
+        paint = rect.getPaint();
+        paint.setXfermode(new PorterDuffXfermode(Mode.SRC_OVER));
+        doPaint(sig);
+        mPrevX = x;
+        mPrevY = y;
     }
 }

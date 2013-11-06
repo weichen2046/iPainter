@@ -14,6 +14,6 @@ public abstract class Shape extends GraphicObject {
     /**
      * the smallest rectangle that can hold this shape.
      */
-    private Rect mRectContainer;
+    protected Rect mBounds;
 
 }

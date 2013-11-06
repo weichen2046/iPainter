@@ -3,15 +3,14 @@
  */
 package com.training.ipainter.core;
 
+import java.util.LinkedList;
+import java.util.Queue;
+
 import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Paint;
-import android.graphics.Paint.Cap;
 import android.util.Log;
 import android.view.SurfaceHolder;
 
 /**
- * @author chenwei
  *
  */
 public class PainterThread extends Thread {
@@ -22,25 +21,32 @@ public class PainterThread extends Thread {
     private SurfaceHolder mHolder;
     private boolean mExitMark = false;
 
+    private Queue<Signal> mQueue;
+
     public PainterThread(SurfaceHolder holder) {
         mHolder = holder;
+        mQueue = new LinkedList<Signal>();
     }
 
     @Override
     public void run() {
-
+        Signal signal = null;
         while (true) {
             try {
                 Log.d(TAG, "waiting for signal.");
                 synchronized (mLocker) {
-                    mLocker.wait();
+                    if (mQueue.size() == 0) {
+                        mLocker.wait();
+                        Log.d(TAG, "signal arrived.");
+                    }
+                    Log.d(TAG, "mQueue.size() = " + mQueue.size());
+                    signal = mQueue.poll();
                 }
-                Log.d(TAG, "signal arrived.");
                 if (getExitMark()) {
                     break;
                 }
 
-                HandleSignal();
+                HandleSignal(signal);
 
             } catch (InterruptedException e) {
                 e.printStackTrace();
@@ -57,28 +63,36 @@ public class PainterThread extends Thread {
     }
 
     public void sendSignal() {
+        sendSignal(null);
+    }
+
+    public void sendSignal(Signal signal) {
         synchronized (mLocker) {
+            if (signal != null) {
+                mQueue.offer(signal);
+            }
             mLocker.notify();
         }
     }
 
     // TODO test code, need refactor
-    public void HandleSignal() {
+    public void HandleSignal(Signal signal) {
 
         Canvas canvas = null;
 
         canvas = mHolder.lockCanvas();
         if (canvas != null) {
-            canvas.drawColor(Color.BLUE);
-            Paint p = new Paint();
-            p.setAntiAlias(true);
-            p.setColor(Color.rgb(0, 0, 0));
-            p.setStrokeWidth(10);
-            p.setStrokeCap(Cap.ROUND);
-            canvas.drawCircle(100, 100, 20, p);
-
+            if (signal != null && signal.mGraphicObj != null) {
+                signal.mGraphicObj.drawSelf(canvas);
+            } else {
+                Log.e(TAG, "signal or signal.mGraphicObj is null.");
+            }
             mHolder.unlockCanvasAndPost(canvas);
         }
+
+        // after done with signal, recycle it
+        // signal.recycle();
+        signal = null;
     }
 
     public synchronized boolean getExitMark() {
