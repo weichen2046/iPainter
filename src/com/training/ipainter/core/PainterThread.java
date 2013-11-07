@@ -6,6 +6,9 @@ package com.training.ipainter.core;
 import java.util.LinkedList;
 import java.util.Queue;
 
+import com.training.ipainter.drawingtools.DrawingToolsManager;
+
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.util.Log;
 import android.view.SurfaceHolder;
@@ -13,7 +16,7 @@ import android.view.SurfaceHolder;
 /**
  *
  */
-public class PainterThread extends Thread {
+class PainterThread extends Thread {
 
     private static final String TAG = "PainterThread";
 
@@ -22,10 +25,15 @@ public class PainterThread extends Thread {
     private boolean mExitMark = false;
 
     private Queue<Signal> mQueue;
+    
+    private Bitmap mBitmap;
+    private Canvas mCanvas;
+    private DrawingToolsManager mToolsManager;
 
     public PainterThread(SurfaceHolder holder) {
         mHolder = holder;
         mQueue = new LinkedList<Signal>();
+        mToolsManager = DrawingToolsManager.getInstance();
     }
 
     @Override
@@ -83,10 +91,11 @@ public class PainterThread extends Thread {
         canvas = mHolder.lockCanvas();
         if (canvas != null) {
             if (signal != null && signal.mGraphicObj != null) {
-                signal.mGraphicObj.drawSelf(canvas);
+                signal.mGraphicObj.drawSelf(mCanvas);
             } else {
                 Log.e(TAG, "signal or signal.mGraphicObj is null.");
             }
+            canvas.drawBitmap(mBitmap, 0, 0, null);
             mHolder.unlockCanvasAndPost(canvas);
         }
 
@@ -101,5 +110,11 @@ public class PainterThread extends Thread {
 
     public synchronized void setExitMark(boolean mark) {
         mExitMark = mark;
+    }
+
+    public void setBitmap(Bitmap bitmap) {
+        mBitmap = bitmap;
+        mBitmap.eraseColor(mToolsManager.getBoardBackgroundColor());
+        mCanvas = new Canvas(mBitmap);
     }
 }
