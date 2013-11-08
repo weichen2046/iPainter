@@ -3,12 +3,20 @@
  */
 package com.training.ipainter.drawingtools;
 
+import android.graphics.Color;
+import android.graphics.Paint;
+
 /**
  *
  */
 public class DrawingToolsManager {
 
+    private int mBoardBgColor;
+    private Paint mPaint;
+
     private DrawingToolsManager() {
+        mBoardBgColor = Color.WHITE;
+        mPaint = new Paint();
     }
 
     /**
@@ -23,5 +31,24 @@ public class DrawingToolsManager {
     public static DrawingToolsManager getInstance() {
         return LazyHolder.INSTANCE;
     }
+
+    public int getBoardBackgroundColor() {
+        return mBoardBgColor;
+    }
+
+    public void setBoardBackgroundColor(int color) {
+        int oldColor = mBoardBgColor;
+        mBoardBgColor = color;
+    }
+
+    public Paint getPaint() {
+        return mPaint;
+    }
+
+    // public void registerBoardBackgroundColorChangeEvent()
+
+    // public class OnConfigChangeListener {
+    //
+    // }
 
 }

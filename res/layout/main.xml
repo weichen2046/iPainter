@@ -2,7 +2,7 @@
     android:layout_width="fill_parent"
     android:layout_height="fill_parent" >
 
-    <com.training.ipainter.ui.BoardCanvas android:id="@+id/canvas"
+    <com.training.ipainter.ui.PaintBoardView 
         android:layout_width="fill_parent"
         android:layout_height="fill_parent" />
 
