@@ -19,6 +19,8 @@ public interface IDrawable {
      */
     void drawSelf(Canvas canvas, Paint paint);
 
+    void initPaint(Paint paint);
+
     /**
      * 
      * @param x

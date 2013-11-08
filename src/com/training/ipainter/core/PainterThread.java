@@ -83,7 +83,7 @@ public class PainterThread extends Thread {
         canvas = mHolder.lockCanvas();
         if (canvas != null) {
             if (signal != null && signal.mGraphicObj != null) {
-                signal.mGraphicObj.drawSelf(canvas);
+                // signal.mGraphicObj.drawSelf(canvas);
             } else {
                 Log.e(TAG, "signal or signal.mGraphicObj is null.");
             }

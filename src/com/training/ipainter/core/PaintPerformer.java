@@ -3,13 +3,8 @@
  */
 package com.training.ipainter.core;
 
-import android.graphics.Paint;
-import android.graphics.PorterDuff.Mode;
-import android.graphics.PorterDuffXfermode;
 import android.util.Log;
 import android.view.SurfaceHolder;
-
-import com.training.ipainter.model.Rectangle;
 
 /**
  * @author chenwei
@@ -88,20 +83,20 @@ public class PaintPerformer {
     }
 
     public void actionMove(int x, int y) {
-        Signal sig = Signal.obtain();
-        Rectangle rect = new Rectangle(mStartX, mStartY, x, y);
-        sig.setDrawable(rect);
-        Paint paint = rect.getPaint();
+        // Signal sig = Signal.obtain();
+        // Rectangle rect = new Rectangle(mStartX, mStartY, x, y);
+        // sig.setDrawable(rect);
+        // Paint paint = rect.getPaint();
         // erase origin
-        paint.setXfermode(new PorterDuffXfermode(Mode.XOR));
-        doPaint(sig);
+        // paint.setXfermode(new PorterDuffXfermode(Mode.XOR));
+        // doPaint(sig);
         // paint new
-        sig = Signal.obtain();
-        rect = new Rectangle(mStartX, mStartY, x, y);
-        sig.setDrawable(rect);
-        paint = rect.getPaint();
-        paint.setXfermode(new PorterDuffXfermode(Mode.SRC_OVER));
-        doPaint(sig);
+        // sig = Signal.obtain();
+        // rect = new Rectangle(mStartX, mStartY, x, y);
+        // sig.setDrawable(rect);
+        // paint = rect.getPaint();
+        // paint.setXfermode(new PorterDuffXfermode(Mode.SRC_OVER));
+        // oPaint(sig);
         mPrevX = x;
         mPrevY = y;
     }

@@ -30,4 +30,10 @@ public class Line extends GraphicObject {
         return false;
     }
 
+    @Override
+    public void initPaint(Paint paint) {
+        // TODO Auto-generated method stub
+
+    }
+
 }
