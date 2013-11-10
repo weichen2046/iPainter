@@ -2,11 +2,16 @@ package com.training.ipainter.ui;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.ListIterator;
 
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.DashPathEffect;
 import android.graphics.Paint;
+import android.graphics.Paint.Style;
+import android.graphics.PathEffect;
+import android.graphics.Rect;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -14,7 +19,9 @@ import android.view.View;
 
 import com.training.ipainter.drawingtools.DrawingToolsManager;
 import com.training.ipainter.drawingtools.DrawingToolsManager.OnConfigureChangeListener;
+import com.training.ipainter.model.GraphicObject;
 import com.training.ipainter.model.IDrawable;
+import com.training.ipainter.model.Rectangle;
 
 public class PaintBoardView extends View implements
         OnConfigureChangeListener {
@@ -26,10 +33,15 @@ public class PaintBoardView extends View implements
     private Canvas mCanvas;
     private Canvas mCanvas4Backup;
     private Paint mPaint;
+    private Paint mDashPaint;
+    private Rect mRectDirty;
+    private GraphicObject mSelectedGraphic;
     private int mMode;
     private int mBrushType;
     private float mSX;
     private float mSY;
+    private float mPX;
+    private float mPY;
 
     private DrawingToolsManager mToolsManager;
     private List<IDrawable> mDrawingHistories;
@@ -41,6 +53,22 @@ public class PaintBoardView extends View implements
         mDrawingHistories = new LinkedList<IDrawable>();
 
         mToolsManager.registerConfigureChangeEvent(this);
+        
+        mRectDirty = new Rect();
+
+        // init dash paint for drawing when finger move
+        initDashPaint();
+    }
+
+    private void initDashPaint() {
+        mDashPaint = new Paint();
+        mDashPaint.setAntiAlias(true);
+        mDashPaint.setStyle(Style.STROKE);
+        PathEffect effects = new DashPathEffect(new float[] {
+                5, 5, 5, 5
+        }, 1);
+        mDashPaint.setPathEffect(effects);
+        mDashPaint.setStrokeWidth(1);
     }
 
     @Override
@@ -68,20 +96,38 @@ public class PaintBoardView extends View implements
         canvas.drawBitmap(mBitmap, 0, 0, null);
     }
 
-    private void touch_start(float x, float y) {
+    private void touchStart(float x, float y) {
         mSX = x;
         mSY = y;
 
-        // backup current bitmap on paint board
-        mCanvas4Backup.drawBitmap(mBitmap, 0, 0, null);
+        switch (mMode) {
+            case DrawingToolsManager.PAINT_MODE:
+                // backup current bitmap on paint board
+                mCanvas4Backup.drawBitmap(mBitmap, 0, 0, null);
+                break;
+            case DrawingToolsManager.SELECT_MODE:
+                // if is select mode, we need to check is any drawable object
+                // under start point
+                // if has one drawable object under this point we can move it
+                // when finger move or we can start to select multiple drawable
+                // objects.
+                mSelectedGraphic = getFirstDrawableOnPoint((int) x, (int) y);
+                mPX = x;
+                mPY = y;
+                break;
+            default:
+                Log.d(TAG, "Unknown mode in touchStart.");
+                break;
+        }
     }
 
-    private void touch_move(float x, float y) {
+    private void touchMove(float x, float y) {
         switch (mMode) {
             case DrawingToolsManager.PAINT_MODE:
                 doPaintModeWhenMove(x, y);
                 break;
             case DrawingToolsManager.SELECT_MODE:
+                doSelectModeWhenMove(x, y);
                 break;
             default:
                 Log.d(TAG, "Unknown mode in touch_move.");
@@ -89,7 +135,8 @@ public class PaintBoardView extends View implements
         }
     }
 
-    private void touch_up(float x, float y) {
+    private int mCountForTestSelectMode = 0;
+    private void touchUp(float x, float y) {
         // TODO
         // new IDrawable object and add to
         switch (mMode) {
@@ -97,10 +144,25 @@ public class PaintBoardView extends View implements
                 doPaintModeWhenUp(x, y);
                 break;
             case DrawingToolsManager.SELECT_MODE:
+                mSelectedGraphic = null;
                 break;
             default:
                 Log.d(TAG, "Unknown mode in touch_up.");
                 break;
+        }
+        // TODO the next line is for test and need remove
+        mPaint.setColor(mToolsManager.getRandomColor());
+        mCountForTestSelectMode++;
+        if(mCountForTestSelectMode % 3 == 0) {
+            Log.d(TAG, "Change mode, prev mode is: " + mMode);
+            if (mMode == 0) {
+                // mToolsManager.setMode(1);
+                mMode = 1;
+            } else {
+                // mToolsManager.setMode(0);
+                mMode = 0;
+            }
+            Log.d(TAG, "Now mode is: " + mMode);
         }
     }
 
@@ -111,7 +173,14 @@ public class PaintBoardView extends View implements
             case DrawingToolsManager.BRUSH_LINE:
                 break;
             case DrawingToolsManager.BRUSH_RECT:
-                mCanvas.drawRect(mSX, mSY, x, y, mPaint);
+                // 1 we convert float to int here
+                // because we only save these int values in our Rectangle
+                // when finger up
+                // 2 we intentionally shrink the rectangle by 1 pix here
+                // to avoid the dash rectangle always showing when we fill
+                // the same size of rectangle
+                mCanvas.drawRect((int) mSX + 1, (int) mSY + 1, (int) x - 1, (int) y - 1,
+                        mDashPaint);
                 this.invalidate();
                 break;
             case DrawingToolsManager.BRUSH_CIRCLE:
@@ -122,6 +191,22 @@ public class PaintBoardView extends View implements
         }
     }
 
+    private void doSelectModeWhenMove(float x, float y) {
+        if (mSelectedGraphic == null) {
+            // start select multiple GraphicObject
+        } else {
+            Log.d(TAG, "doSelectMode for one.");
+            // start move select GraphicObject
+            float dx = x - mPX;
+            float dy = y - mPY;
+            mSelectedGraphic.adjustPosition((int) dx, (int) dy);
+            redrawAllGraphicObjects();
+            this.invalidate();
+            mPX = x;
+            mPY = y;
+        }
+    }
+
     private void doPaintModeWhenUp(float x, float y) {
         // TODO need refactoring for using Factory Pattern
         IDrawable drawable = null;
@@ -129,6 +214,9 @@ public class PaintBoardView extends View implements
             case DrawingToolsManager.BRUSH_LINE:
                 break;
             case DrawingToolsManager.BRUSH_RECT:
+                mCanvas.drawRect((int) mSX, (int) mSY, (int) x, (int) y, mPaint);
+                drawable = new Rectangle((int) mSX, (int) mSY, (int) x, (int) y);
+                drawable.resetPaint(mPaint);
                 break;
             case DrawingToolsManager.BRUSH_CIRCLE:
                 break;
@@ -138,6 +226,8 @@ public class PaintBoardView extends View implements
         }
         if (drawable != null) {
             mDrawingHistories.add(drawable);
+            Log.d(TAG, "new drawable object added, now size is: "
+                    + mDrawingHistories.size());
         }
     }
 
@@ -148,13 +238,13 @@ public class PaintBoardView extends View implements
 
         switch (event.getAction()) {
         case MotionEvent.ACTION_DOWN:
-            touch_start(x, y);
+                touchStart(x, y);
             break;
         case MotionEvent.ACTION_MOVE:
-            touch_move(x, y);
+                touchMove(x, y);
             break;
         case MotionEvent.ACTION_UP:
-            touch_up(x, y);
+                touchUp(x, y);
             break;
         }
         return true;
@@ -164,8 +254,21 @@ public class PaintBoardView extends View implements
         // clear board by repaint the background
         mCanvas.drawColor(mToolsManager.getBoardBackgroundColor());
         for (IDrawable drawable : mDrawingHistories) {
-            drawable.drawSelf(mCanvas, mToolsManager.getPaint());
+            drawable.drawSelf(mCanvas);
         }
+    }
+
+    private GraphicObject getFirstDrawableOnPoint(int x, int y) {
+        ListIterator<IDrawable> iter =
+                mDrawingHistories.listIterator(mDrawingHistories.size());
+        GraphicObject graphic = null;
+        while(iter.hasPrevious()) {
+            graphic = (GraphicObject) iter.previous();
+            if (graphic.containsPoint(x, y)) {
+                break;
+            }
+        }
+        return graphic;
     }
 
     @Override

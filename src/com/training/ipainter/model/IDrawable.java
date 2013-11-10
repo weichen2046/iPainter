@@ -17,16 +17,7 @@ public interface IDrawable {
      * @param canvas
      * @param paint
      */
-    void drawSelf(Canvas canvas, Paint paint);
+    void drawSelf(Canvas canvas);
 
-    void initPaint(Paint paint);
-
-    /**
-     * 
-     * @param x
-     * @param y
-     * @return
-     */
-    boolean containsPoint(float x, float y);
-
+    void resetPaint(Paint paint);
 }

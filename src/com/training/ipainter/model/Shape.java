@@ -16,4 +16,13 @@ public abstract class Shape extends GraphicObject {
      */
     protected Rect mBounds;
 
+    public Shape() {
+        mBounds = new Rect();
+    }
+
+    @Override
+    public boolean containsPoint(int x, int y) {
+        return mBounds.contains(x, y);
+    }
+
 }

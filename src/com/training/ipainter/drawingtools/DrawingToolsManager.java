@@ -5,9 +5,11 @@ package com.training.ipainter.drawingtools;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Random;
 
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Paint.Style;
 
 /**
  *
@@ -52,9 +54,20 @@ public class DrawingToolsManager {
 
     private void resetToDefault() {
         mBoardBgColor = Color.WHITE;
-        mPaint = new Paint();
         mMode = PAINT_MODE;
         mBrushType = BRUSH_RECT;
+
+        mPaint = new Paint();
+        mPaint.setAntiAlias(true);
+        mPaint.setStyle(Style.FILL_AND_STROKE);
+        mPaint.setStrokeWidth(1);
+    }
+
+    // this method is for test now
+    // may be it is useful for the future
+    public int getRandomColor() {
+        Random random = new Random();
+        return Color.rgb(random.nextInt(256), random.nextInt(256), random.nextInt(256));
     }
 
     public int getBoardBackgroundColor() {

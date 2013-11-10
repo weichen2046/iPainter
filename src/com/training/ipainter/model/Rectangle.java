@@ -4,35 +4,26 @@
 package com.training.ipainter.model;
 
 import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Paint;
 
 /**
  * @author chenwei
  *
  */
 public class Rectangle extends Shape {
-
-    @Override
-    public void drawSelf(Canvas canvas, Paint paint) {
-        // TODO Auto-generated method stub
-        initPaint(paint);
-        canvas.drawRect(mBounds, paint);
+    
+    public Rectangle(int left, int top, int right, int bottom) {
+        mBounds.set(left, top, right, bottom);
     }
 
     @Override
-    public boolean containsPoint(float x, float y) {
+    public void drawSelf(Canvas canvas) {
         // TODO Auto-generated method stub
-        return false;
+        canvas.drawRect(mBounds, mPaint);
     }
 
     @Override
-    public void initPaint(Paint paint) {
-        paint.reset();
-        // color
-        paint.setColor(Color.GREEN);
-        // width
-        // TODO other attribute associate to Paint
+    public void adjustPosition(int dx, int dy) {
+        mBounds.offset(dx, dy);
     }
 
 }
