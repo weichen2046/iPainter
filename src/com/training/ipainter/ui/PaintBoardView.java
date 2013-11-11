@@ -19,9 +19,10 @@ import android.view.View;
 
 import com.training.ipainter.drawingtools.DrawingToolsManager;
 import com.training.ipainter.drawingtools.DrawingToolsManager.OnConfigureChangeListener;
-import com.training.ipainter.model.GraphicObject;
+import com.training.ipainter.model.DrawableDecorator;
 import com.training.ipainter.model.IDrawable;
 import com.training.ipainter.model.Rectangle;
+import com.training.ipainter.model.SelectBorderDecorator;
 
 public class PaintBoardView extends View implements
         OnConfigureChangeListener {
@@ -35,7 +36,8 @@ public class PaintBoardView extends View implements
     private Paint mPaint;
     private Paint mDashPaint;
     private Rect mRectDirty;
-    private GraphicObject mSelectedGraphic;
+    private IDrawable mSelectedDrawable;
+    private DrawableDecorator mSelectBorderDecorator;
     private int mMode;
     private int mBrushType;
     private float mSX;
@@ -111,7 +113,37 @@ public class PaintBoardView extends View implements
                 // if has one drawable object under this point we can move it
                 // when finger move or we can start to select multiple drawable
                 // objects.
-                mSelectedGraphic = getFirstDrawableOnPoint((int) x, (int) y);
+                mSelectedDrawable = getFirstDrawableOnPoint((int) x, (int) y);
+                if (mSelectedDrawable != null) {
+                    if (mSelectedDrawable instanceof DrawableDecorator) {
+                        // previous select, doing nothing
+                    } else {
+                        if (mSelectBorderDecorator != null) {
+                            // has previous select, delete it from
+                            // mDrawingHistories
+                            int replaceIndex =
+                                    mDrawingHistories.indexOf(mSelectBorderDecorator);
+                            if (-1 != replaceIndex) {
+                                mDrawingHistories.add(replaceIndex,
+                                        mSelectBorderDecorator.getDrawable());
+                                mDrawingHistories.remove(mSelectBorderDecorator);
+                                mSelectBorderDecorator = null;
+                            }
+                        }
+                        // new a SelectBorderDecorator
+                        // TODO may be new a SelectBorderDecorator not here
+                        // new a SelectBorderDecorator
+                        mSelectBorderDecorator =
+                                new SelectBorderDecorator(mSelectedDrawable);
+                        // replace it to mDrawingHistories
+                        int replaceIndex =
+                                mDrawingHistories.indexOf(mSelectedDrawable);
+                        if (-1 != replaceIndex) {
+                            mDrawingHistories.add(replaceIndex, mSelectBorderDecorator);
+                            mDrawingHistories.remove(mSelectedDrawable);
+                        }
+                    }
+                }
                 mPX = x;
                 mPY = y;
                 break;
@@ -143,7 +175,7 @@ public class PaintBoardView extends View implements
                 doPaintModeWhenUp(x, y);
                 break;
             case DrawingToolsManager.SELECT_MODE:
-                mSelectedGraphic = null;
+                mSelectedDrawable = null;
                 break;
             default:
                 Log.d(TAG, "Unknown mode in touch_up.");
@@ -179,14 +211,14 @@ public class PaintBoardView extends View implements
     }
 
     private void doSelectModeWhenMove(float x, float y) {
-        if (mSelectedGraphic == null) {
+        if (mSelectedDrawable == null) {
             // start select multiple GraphicObject
         } else {
             Log.d(TAG, "doSelectMode for one.");
             // start move select GraphicObject
             float dx = x - mPX;
             float dy = y - mPY;
-            mSelectedGraphic.adjustPosition((int) dx, (int) dy);
+            mSelectedDrawable.adjustPosition((int) dx, (int) dy);
             redrawAllGraphicObjects();
             this.invalidate();
             mPX = x;
@@ -245,17 +277,17 @@ public class PaintBoardView extends View implements
         }
     }
 
-    private GraphicObject getFirstDrawableOnPoint(int x, int y) {
+    private IDrawable getFirstDrawableOnPoint(int x, int y) {
         ListIterator<IDrawable> iter =
                 mDrawingHistories.listIterator(mDrawingHistories.size());
-        GraphicObject graphic = null;
+        IDrawable drawable = null;
         while(iter.hasPrevious()) {
-            graphic = (GraphicObject) iter.previous();
-            if (graphic.containsPoint(x, y)) {
+            drawable = iter.previous();
+            if (drawable.containsPoint(x, y)) {
                 break;
             }
         }
-        return graphic;
+        return drawable;
     }
 
     @Override

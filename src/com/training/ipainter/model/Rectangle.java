@@ -26,4 +26,9 @@ public class Rectangle extends Shape {
         mBounds.offset(dx, dy);
     }
 
+    @Override
+    public int getGraphicObjType() {
+        return GraphicObject.GRAPHIC_SHAPE_TYPE;
+    }
+
 }

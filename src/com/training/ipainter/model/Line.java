@@ -29,4 +29,9 @@ public class Line extends GraphicObject {
         return false;
     }
 
+    @Override
+    public int getGraphicObjType() {
+        return GraphicObject.GRAPHIC_LINE_TYPE;
+    }
+
 }

@@ -20,4 +20,8 @@ public interface IDrawable {
     void drawSelf(Canvas canvas);
 
     void resetPaint(Paint paint);
+
+    void adjustPosition(int dx, int dy);
+
+    boolean containsPoint(int x, int y);
 }
