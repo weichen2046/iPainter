@@ -128,14 +128,14 @@ public class DrawingToolsManager {
     }
 
     public interface OnConfigureChangeListener {
-        int getInteresingChangeSet();
+        int getInterestingChangeSet();
         int onConfigureChanged(int changedFlags);
     }
 
     private void triggerConfigureChangedEvent(int changedFlags) {
         if (mConfigureChangedListeners != null) {
             for (OnConfigureChangeListener listener : mConfigureChangedListeners) {
-                if ((listener.getInteresingChangeSet() & changedFlags) != 0) {
+                if ((listener.getInterestingChangeSet() & changedFlags) != 0) {
                     listener.onConfigureChanged(changedFlags);
                 }
             }

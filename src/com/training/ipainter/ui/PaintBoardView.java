@@ -135,7 +135,6 @@ public class PaintBoardView extends View implements
         }
     }
 
-    private int mCountForTestSelectMode = 0;
     private void touchUp(float x, float y) {
         // TODO
         // new IDrawable object and add to
@@ -152,18 +151,6 @@ public class PaintBoardView extends View implements
         }
         // TODO the next line is for test and need remove
         mPaint.setColor(mToolsManager.getRandomColor());
-        mCountForTestSelectMode++;
-        if(mCountForTestSelectMode % 3 == 0) {
-            Log.d(TAG, "Change mode, prev mode is: " + mMode);
-            if (mMode == 0) {
-                // mToolsManager.setMode(1);
-                mMode = 1;
-            } else {
-                // mToolsManager.setMode(0);
-                mMode = 0;
-            }
-            Log.d(TAG, "Now mode is: " + mMode);
-        }
     }
 
     private void doPaintModeWhenMove(float x, float y) {
@@ -272,8 +259,10 @@ public class PaintBoardView extends View implements
     }
 
     @Override
-    public int getInteresingChangeSet() {
-        return DrawingToolsManager.PAINT_CHANGE_FLAG;
+    public int getInterestingChangeSet() {
+        return DrawingToolsManager.PAINT_CHANGE_FLAG
+                | DrawingToolsManager.MODE_CHANGE_FLAG
+                | DrawingToolsManager.BRUSH_TYPE_CHANGE_FLAG;
     }
 
     @Override
@@ -285,13 +274,14 @@ public class PaintBoardView extends View implements
         }
         if ((changedFlags & DrawingToolsManager.MODE_CHANGE_FLAG)
                 == DrawingToolsManager.MODE_CHANGE_FLAG) {
-            Log.d(TAG, "onModeChanged called.");
             mMode = mToolsManager.getMode();
+            Log.d(TAG, "onModeChanged called, current mode: " + mMode);
         }
         if ((changedFlags & DrawingToolsManager.BRUSH_TYPE_CHANGE_FLAG)
                 == DrawingToolsManager.BRUSH_TYPE_CHANGE_FLAG) {
-            Log.d(TAG, "onBrushTypeChanged called.");
             mBrushType = mToolsManager.getBrushType();
+            Log.d(TAG, "onBrushTypeChanged called, current brush type: "
+                    + mBrushType);
         }
         return 0;
     }
