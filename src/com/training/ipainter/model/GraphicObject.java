@@ -21,7 +21,7 @@ public abstract class GraphicObject implements IDrawable {
     }
 
     @Override
-    public void resetPaint(Paint paint) {
+    public void setPaint(Paint paint) {
         if(paint == null) {
             throw new IllegalArgumentException("paint can be be null.");
         }

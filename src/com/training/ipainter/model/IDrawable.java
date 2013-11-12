@@ -19,7 +19,7 @@ public interface IDrawable {
      */
     void drawSelf(Canvas canvas);
 
-    void resetPaint(Paint paint);
+    void setPaint(Paint paint);
 
     void adjustPosition(int dx, int dy);
 

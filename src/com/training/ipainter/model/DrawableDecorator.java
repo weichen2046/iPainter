@@ -20,8 +20,8 @@ public abstract class DrawableDecorator implements IDrawable {
     }
 
     @Override
-    public void resetPaint(Paint paint) {
-        mDrawable.resetPaint(paint);
+    public void setPaint(Paint paint) {
+        mDrawable.setPaint(paint);
     }
 
     public IDrawable getDrawable() {

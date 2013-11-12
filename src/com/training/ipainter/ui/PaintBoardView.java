@@ -235,7 +235,7 @@ public class PaintBoardView extends View implements
             case DrawingToolsManager.BRUSH_RECT:
                 mCanvas.drawRect((int) mSX, (int) mSY, (int) x, (int) y, mPaint);
                 drawable = new Rectangle((int) mSX, (int) mSY, (int) x, (int) y);
-                drawable.resetPaint(mPaint);
+                drawable.setPaint(mPaint);
                 break;
             case DrawingToolsManager.BRUSH_CIRCLE:
                 break;
