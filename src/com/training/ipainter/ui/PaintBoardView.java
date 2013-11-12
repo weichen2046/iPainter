@@ -281,13 +281,15 @@ public class PaintBoardView extends View implements
         ListIterator<IDrawable> iter =
                 mDrawingHistories.listIterator(mDrawingHistories.size());
         IDrawable drawable = null;
+        IDrawable retVal = null;
         while(iter.hasPrevious()) {
             drawable = iter.previous();
             if (drawable.containsPoint(x, y)) {
+                retVal = drawable;
                 break;
             }
         }
-        return drawable;
+        return retVal;
     }
 
     @Override
