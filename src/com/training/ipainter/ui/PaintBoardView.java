@@ -118,19 +118,7 @@ public class PaintBoardView extends View implements
                     if (mSelectedDrawable instanceof DrawableDecorator) {
                         // previous select, doing nothing
                     } else {
-                        if (mSelectBorderDecorator != null) {
-                            // has previous select, delete it from
-                            // mDrawingHistories
-                            int replaceIndex =
-                                    mDrawingHistories.indexOf(mSelectBorderDecorator);
-                            if (-1 != replaceIndex) {
-                                mDrawingHistories.add(replaceIndex,
-                                        mSelectBorderDecorator.getDrawable());
-                                mDrawingHistories.remove(mSelectBorderDecorator);
-                                mSelectBorderDecorator = null;
-                            }
-                        }
-                        // new a SelectBorderDecorator
+                        removeSelectedBorderDecorator();
                         // TODO may be new a SelectBorderDecorator not here
                         // new a SelectBorderDecorator
                         mSelectBorderDecorator =
@@ -308,8 +296,7 @@ public class PaintBoardView extends View implements
         }
         if ((changedFlags & DrawingToolsManager.MODE_CHANGE_FLAG)
                 == DrawingToolsManager.MODE_CHANGE_FLAG) {
-            mMode = mToolsManager.getMode();
-            Log.d(TAG, "onModeChanged called, current mode: " + mMode);
+            doModeChange(mToolsManager.getMode());
         }
         if ((changedFlags & DrawingToolsManager.BRUSH_TYPE_CHANGE_FLAG)
                 == DrawingToolsManager.BRUSH_TYPE_CHANGE_FLAG) {
@@ -318,6 +305,37 @@ public class PaintBoardView extends View implements
                     + mBrushType);
         }
         return 0;
+    }
+
+    private void doModeChange(int newMode) {
+        int prevMode = mMode;
+        mMode = newMode;
+
+        if (prevMode == DrawingToolsManager.SELECT_MODE
+                && newMode == DrawingToolsManager.PAINT_MODE) {
+            // if we previous has one selected drawable
+            // remove the selected decorator
+            removeSelectedBorderDecorator();
+        }
+        Log.d(TAG, "onModeChanged called, current mode: " + mMode);
+    }
+
+    private void removeSelectedBorderDecorator() {
+        if (mSelectBorderDecorator != null) {
+            // has previous select, delete it from
+            // mDrawingHistories
+            int replaceIndex =
+                    mDrawingHistories.indexOf(mSelectBorderDecorator);
+            if (-1 != replaceIndex) {
+                mDrawingHistories.add(replaceIndex,
+                        mSelectBorderDecorator.getDrawable());
+                mDrawingHistories.remove(mSelectBorderDecorator);
+                mSelectBorderDecorator = null;
+
+                redrawAllGraphicObjects();
+                this.invalidate();
+            }
+        }
     }
 
 }
