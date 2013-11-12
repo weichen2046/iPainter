@@ -4,6 +4,7 @@
 package com.training.ipainter.model;
 
 import android.graphics.Canvas;
+import android.graphics.Rect;
 
 /**
  * @author chenwei
@@ -29,6 +30,11 @@ public class Rectangle extends Shape {
     @Override
     public int getGraphicObjType() {
         return GraphicObject.GRAPHIC_SHAPE_TYPE;
+    }
+
+    @Override
+    public boolean isIntersectWith(Rect rect) {
+        return rect.intersects(mBounds, rect);
     }
 
 }

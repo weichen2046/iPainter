@@ -5,6 +5,7 @@ package com.training.ipainter.model;
 
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.graphics.Rect;
 
 /**
  * @author chenwei
@@ -24,4 +25,6 @@ public interface IDrawable {
     void adjustPosition(int dx, int dy);
 
     boolean containsPoint(int x, int y);
+
+    boolean isIntersectWith(Rect rect);
 }

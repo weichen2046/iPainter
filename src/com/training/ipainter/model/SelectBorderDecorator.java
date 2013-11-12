@@ -58,4 +58,9 @@ public class SelectBorderDecorator extends DrawableDecorator {
         return mDrawable.containsPoint(x, y);
     }
 
+    @Override
+    public boolean isIntersectWith(Rect rect) {
+        return mDrawable.isIntersectWith(rect);
+    }
+
 }

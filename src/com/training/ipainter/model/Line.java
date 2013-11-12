@@ -5,6 +5,7 @@ package com.training.ipainter.model;
 
 import android.graphics.Canvas;
 import android.graphics.Point;
+import android.graphics.Rect;
 
 /**
  * @author chenwei
@@ -32,6 +33,12 @@ public class Line extends GraphicObject {
     @Override
     public int getGraphicObjType() {
         return GraphicObject.GRAPHIC_LINE_TYPE;
+    }
+
+    @Override
+    public boolean isIntersectWith(Rect rect) {
+        // TODO Auto-generated method stub
+        return false;
     }
 
 }
