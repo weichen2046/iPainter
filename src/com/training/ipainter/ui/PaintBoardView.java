@@ -23,6 +23,8 @@ import com.training.ipainter.model.DrawableDecorator;
 import com.training.ipainter.model.IDrawable;
 import com.training.ipainter.model.Rectangle;
 import com.training.ipainter.model.SelectBorderDecorator;
+import com.training.ipainter.model.Shape;
+import com.training.ipainter.utils.RectCoordinateCorrector;
 
 public class PaintBoardView extends View implements
         OnConfigureChangeListener {
@@ -49,6 +51,10 @@ public class PaintBoardView extends View implements
     private DrawingToolsManager mToolsManager;
     private List<IDrawable> mDrawingHistories;
 
+    // use to rectify rect coordinate to keep left always not large than right
+    // and top always not large than bottom
+    private RectCoordinateCorrector mRectCoordinateCorrector;
+
     public PaintBoardView(Context context, AttributeSet attrs) {
         super(context, attrs);
 
@@ -56,6 +62,7 @@ public class PaintBoardView extends View implements
         mDrawingHistories = new LinkedList<IDrawable>();
         mRectDirty = new Rect();
         mMode = DrawingToolsManager.UNKNOWN_MODE;
+        mRectCoordinateCorrector = new RectCoordinateCorrector();
 
         // init dash paint for drawing when finger move
         initDashPaint();
@@ -259,7 +266,11 @@ public class PaintBoardView extends View implements
                 // 2 we intentionally shrink the rectangle by 1 pix here
                 // to avoid the dash rectangle always showing when we fill
                 // the same size of rectangle
-                mCanvas.drawRect((int) mSX + 1, (int) mSY + 1, (int) x - 1, (int) y - 1,
+                mRectCoordinateCorrector.rectifyCoordinate((int) mSX, (int) mSY, (int) x, (int) y);
+                mCanvas.drawRect(mRectCoordinateCorrector.mLeft + 1,
+                        mRectCoordinateCorrector.mTop + 1,
+                        mRectCoordinateCorrector.mRight - 1,
+                        mRectCoordinateCorrector.mBottom - 1,
                         mDashPaint);
                 this.invalidate();
                 break;
@@ -303,7 +314,12 @@ public class PaintBoardView extends View implements
                 break;
             case DrawingToolsManager.BRUSH_RECT:
                 mCanvas.drawRect((int) mSX, (int) mSY, (int) x, (int) y, mPaint);
-                drawable = new Rectangle((int) mSX, (int) mSY, (int) x, (int) y);
+                mRectCoordinateCorrector.rectifyCoordinate((int) mSX, (int) mSY,
+                        (int) x, (int) y);
+                drawable = new Rectangle(mRectCoordinateCorrector.mLeft,
+                        mRectCoordinateCorrector.mTop,
+                        mRectCoordinateCorrector.mRight,
+                        mRectCoordinateCorrector.mBottom);
                 drawable.setPaint(mPaint);
                 break;
             case DrawingToolsManager.BRUSH_CIRCLE:
@@ -328,7 +344,7 @@ public class PaintBoardView extends View implements
         if (mIsSelectMultiple) {
             // erase the dash rect
             // make all drawable object wrap with SelectedBorderDecorator
-            Rect dashRect = new Rect((int) mSX, (int) mSY, (int) x, (int) y);
+            Rect dashRect = Shape.getNormalRect((int) mSX, (int) mSY, (int) x, (int) y);
 
             IDrawable drawable = null;
             for (int i = 0; i < mDrawingHistories.size(); i++) {

@@ -11,7 +11,11 @@ import android.graphics.Rect;
  *
  */
 public class Rectangle extends Shape {
-    
+
+    public Rectangle(Rect rect) {
+        mBounds.set(rect);
+    }
+
     public Rectangle(int left, int top, int right, int bottom) {
         mBounds.set(left, top, right, bottom);
     }
