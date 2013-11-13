@@ -101,6 +101,52 @@ public class PaintBoardView extends View implements
         canvas.drawBitmap(mBitmap, 0, 0, null);
     }
 
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        float x = event.getX();
+        float y = event.getY();
+
+        switch (event.getAction()) {
+            case MotionEvent.ACTION_DOWN:
+                touchStart(x, y);
+                break;
+            case MotionEvent.ACTION_MOVE:
+                touchMove(x, y);
+                break;
+            case MotionEvent.ACTION_UP:
+                touchUp(x, y);
+                break;
+        }
+        return true;
+    }
+
+    @Override
+    public int getInterestingChangeSet() {
+        return DrawingToolsManager.PAINT_CHANGE_FLAG
+                | DrawingToolsManager.MODE_CHANGE_FLAG
+                | DrawingToolsManager.BRUSH_TYPE_CHANGE_FLAG;
+    }
+
+    @Override
+    public int onConfigureChanged(int changedFlags) {
+        if ((changedFlags & DrawingToolsManager.PAINT_CHANGE_FLAG)
+                == DrawingToolsManager.PAINT_CHANGE_FLAG) {
+            Log.d(TAG, "onPaintChanged called.");
+            mPaint = mToolsManager.getPaint();
+        }
+        if ((changedFlags & DrawingToolsManager.MODE_CHANGE_FLAG)
+                == DrawingToolsManager.MODE_CHANGE_FLAG) {
+            onModeChanging(mToolsManager.getMode());
+        }
+        if ((changedFlags & DrawingToolsManager.BRUSH_TYPE_CHANGE_FLAG)
+                == DrawingToolsManager.BRUSH_TYPE_CHANGE_FLAG) {
+            mBrushType = mToolsManager.getBrushType();
+            Log.d(TAG, "onBrushTypeChanged called, current brush type: "
+                    + mBrushType);
+        }
+        return 0;
+    }
+
     private void touchStart(float x, float y) {
         mSX = x;
         mSY = y;
@@ -141,7 +187,7 @@ public class PaintBoardView extends View implements
         // new IDrawable object and add to
         switch (mMode) {
             case DrawingToolsManager.PAINT_MODE:
-                doPaintModeWhenUp(x, y);
+                doPaintModeUp(x, y);
                 break;
             case DrawingToolsManager.SELECT_MODE:
                 doSelectModeUp(x, y);
@@ -150,6 +196,54 @@ public class PaintBoardView extends View implements
                 Log.d(TAG, "Unknown mode in touch_up.");
                 break;
         }
+    }
+
+    private void doSelectModeStart(float x, float y) {
+        // if is select mode, we need to check is any drawable object
+        // under start point
+        // if has one drawable object under this point we can move it
+        // when finger move or we can start to select multiple drawable
+        // objects.
+
+        // TODO if we need a context menu for long touch event to
+        // composite already selected multi drawable object, there may be a
+        // bug if clear all selected indicator.
+        clearAllSelectedIndicators();
+        // redraw all drawable object to mBitmap to avoid some code
+        // backup current status that may be show's selected indicators
+        redrawAllGraphicObjects();
+
+        mSelectedDrawable = getFirstDrawableOnPoint((int) x, (int) y);
+        if (mSelectedDrawable != null) {
+            if (mSelectedDrawable instanceof DrawableDecorator) {
+                // previous select, doing nothing
+            } else {
+                removeCurrentSelectedIndicators();
+                // TODO may be new a SelectBorderDecorator not here
+                // new a SelectBorderDecorator
+                mSelectBorderDecorator =
+                        new SelectBorderDecorator(mSelectedDrawable);
+                // replace it to mDrawingHistories
+                int replaceIndex =
+                        mDrawingHistories.indexOf(mSelectedDrawable);
+                if (-1 != replaceIndex) {
+                    mDrawingHistories.add(replaceIndex, mSelectBorderDecorator);
+                    mDrawingHistories.remove(mSelectedDrawable);
+                }
+            }
+            mIsSelectMultiple = false;
+        } else {
+            removeCurrentSelectedIndicators();
+            // if previous multiple select not finish, we don't need to backup
+            // the current panit board or the dash rect will also be backup
+            if (!mIsSelectMultiple) {
+                // backup current bitmap on paint board
+                mCanvas4Backup.drawBitmap(mBitmap, 0, 0, null);
+                mIsSelectMultiple = true;
+            }
+        }
+        mPX = x;
+        mPY = y;
     }
 
     private void doPaintModeMove(float x, float y) {
@@ -201,7 +295,7 @@ public class PaintBoardView extends View implements
         }
     }
 
-    private void doPaintModeWhenUp(float x, float y) {
+    private void doPaintModeUp(float x, float y) {
         // TODO need refactoring for using Factory Pattern
         IDrawable drawable = null;
         switch (mBrushType) {
@@ -223,168 +317,6 @@ public class PaintBoardView extends View implements
             Log.d(TAG, "new drawable object added, now size is: "
                     + mDrawingHistories.size());
         }
-    }
-
-    @Override
-    public boolean onTouchEvent(MotionEvent event) {
-        float x = event.getX();
-        float y = event.getY();
-
-        switch (event.getAction()) {
-        case MotionEvent.ACTION_DOWN:
-                touchStart(x, y);
-            break;
-        case MotionEvent.ACTION_MOVE:
-                touchMove(x, y);
-            break;
-        case MotionEvent.ACTION_UP:
-                touchUp(x, y);
-            break;
-        }
-        return true;
-    }
-
-    private void redrawAllGraphicObjects() {
-        // if we have prepared mCanvas we can draw it now
-        // because mCanvas only be created after onSizeChanged be called
-        // but this method will be call after
-        if (mCanvas != null) {
-            // clear board by repaint the background
-            mCanvas.drawColor(mToolsManager.getBoardBackgroundColor());
-            for (IDrawable drawable : mDrawingHistories) {
-                drawable.drawSelf(mCanvas);
-            }
-        }
-    }
-
-    private IDrawable getFirstDrawableOnPoint(int x, int y) {
-        ListIterator<IDrawable> iter =
-                mDrawingHistories.listIterator(mDrawingHistories.size());
-        IDrawable drawable = null;
-        IDrawable retVal = null;
-        while(iter.hasPrevious()) {
-            drawable = iter.previous();
-            if (drawable.containsPoint(x, y)) {
-                retVal = drawable;
-                break;
-            }
-        }
-        return retVal;
-    }
-
-    @Override
-    public int getInterestingChangeSet() {
-        return DrawingToolsManager.PAINT_CHANGE_FLAG
-                | DrawingToolsManager.MODE_CHANGE_FLAG
-                | DrawingToolsManager.BRUSH_TYPE_CHANGE_FLAG;
-    }
-
-    @Override
-    public int onConfigureChanged(int changedFlags) {
-        if ((changedFlags & DrawingToolsManager.PAINT_CHANGE_FLAG)
-                == DrawingToolsManager.PAINT_CHANGE_FLAG) {
-            Log.d(TAG, "onPaintChanged called.");
-            mPaint = mToolsManager.getPaint();
-        }
-        if ((changedFlags & DrawingToolsManager.MODE_CHANGE_FLAG)
-                == DrawingToolsManager.MODE_CHANGE_FLAG) {
-            doModeChange(mToolsManager.getMode());
-        }
-        if ((changedFlags & DrawingToolsManager.BRUSH_TYPE_CHANGE_FLAG)
-                == DrawingToolsManager.BRUSH_TYPE_CHANGE_FLAG) {
-            mBrushType = mToolsManager.getBrushType();
-            Log.d(TAG, "onBrushTypeChanged called, current brush type: "
-                    + mBrushType);
-        }
-        return 0;
-    }
-
-    private void doModeChange(int newMode) {
-        int prevMode = mMode;
-        mMode = newMode;
-
-        if (prevMode == DrawingToolsManager.SELECT_MODE
-                && newMode == DrawingToolsManager.PAINT_MODE) {
-            if (mIsSelectMultiple) {
-                mIsSelectMultiple = false;
-                // no need to remove dash rect for the dash is disappear when
-                // finger up
-                // only need to remove all selected indicators
-                clearAllSelectedIndicators();
-                redrawAllGraphicObjects();
-                this.invalidate();
-            } else {
-                // if we previous has one selected drawable
-                // remove the selected decorator
-                removeSelectedBorderDecorator();
-                redrawAllGraphicObjects();
-                this.invalidate();
-            }
-        }
-        Log.d(TAG, "onModeChanged called, current mode: " + mMode);
-    }
-
-    private void removeSelectedBorderDecorator() {
-        if (mSelectBorderDecorator != null) {
-            // has previous select, delete it from
-            // mDrawingHistories
-            int replaceIndex =
-                    mDrawingHistories.indexOf(mSelectBorderDecorator);
-            if (-1 != replaceIndex) {
-                mDrawingHistories.add(replaceIndex,
-                        mSelectBorderDecorator.getDrawable());
-                mDrawingHistories.remove(mSelectBorderDecorator);
-                mSelectBorderDecorator = null;
-            }
-        }
-    }
-
-    private void doSelectModeStart(float x, float y) {
-        // if is select mode, we need to check is any drawable object
-        // under start point
-        // if has one drawable object under this point we can move it
-        // when finger move or we can start to select multiple drawable
-        // objects.
-
-        // TODO if we need a context menu for long touch event to
-        // composite already selected multi drawable object, there may be a
-        // bug if clear all selected indicator.
-        clearAllSelectedIndicators();
-        // redraw all drawable object to mBitmap to avoid some code
-        // backup current status that may be show's selected indicators
-        redrawAllGraphicObjects();
-
-        mSelectedDrawable = getFirstDrawableOnPoint((int) x, (int) y);
-        if (mSelectedDrawable != null) {
-            if (mSelectedDrawable instanceof DrawableDecorator) {
-                // previous select, doing nothing
-            } else {
-                removeSelectedBorderDecorator();
-                // TODO may be new a SelectBorderDecorator not here
-                // new a SelectBorderDecorator
-                mSelectBorderDecorator =
-                        new SelectBorderDecorator(mSelectedDrawable);
-                // replace it to mDrawingHistories
-                int replaceIndex =
-                        mDrawingHistories.indexOf(mSelectedDrawable);
-                if (-1 != replaceIndex) {
-                    mDrawingHistories.add(replaceIndex, mSelectBorderDecorator);
-                    mDrawingHistories.remove(mSelectedDrawable);
-                }
-            }
-            mIsSelectMultiple = false;
-        } else {
-            removeSelectedBorderDecorator();
-            // if previous multiple select not finish, we don't need to backup
-            // the current panit board or the dash rect will also be backup
-            if (!mIsSelectMultiple) {
-                // backup current bitmap on paint board
-                mCanvas4Backup.drawBitmap(mBitmap, 0, 0, null);
-                mIsSelectMultiple = true;
-            }
-        }
-        mPX = x;
-        mPY = y;
     }
 
     private void doSelectModeUp(float x, float y) {
@@ -415,6 +347,87 @@ public class PaintBoardView extends View implements
         }
     }
 
+    private void onModeChanging(int newMode) {
+        int prevMode = mMode;
+        mMode = newMode;
+
+        if (prevMode == DrawingToolsManager.SELECT_MODE
+                && newMode == DrawingToolsManager.PAINT_MODE) {
+            if (mIsSelectMultiple) {
+                mIsSelectMultiple = false;
+                // no need to remove dash rect for the dash is disappear when
+                // finger up
+                // only need to remove all selected indicators
+                clearAllSelectedIndicators();
+                redrawAllGraphicObjects();
+                this.invalidate();
+            } else {
+                // if we previous has one selected drawable
+                // remove the selected decorator
+                removeCurrentSelectedIndicators();
+                redrawAllGraphicObjects();
+                this.invalidate();
+            }
+        }
+        Log.d(TAG, "onModeChanged called, current mode: " + mMode);
+    }
+
+    private void redrawAllGraphicObjects() {
+        // if we have prepared mCanvas we can draw it now
+        // because mCanvas only be created after onSizeChanged be called
+        // but this method will be call after
+        if (mCanvas != null) {
+            // clear board by repaint the background
+            mCanvas.drawColor(mToolsManager.getBoardBackgroundColor());
+            for (IDrawable drawable : mDrawingHistories) {
+                drawable.drawSelf(mCanvas);
+            }
+        }
+    }
+
+    private IDrawable getFirstDrawableOnPoint(int x, int y) {
+        ListIterator<IDrawable> iter =
+                mDrawingHistories.listIterator(mDrawingHistories.size());
+        IDrawable drawable = null;
+        IDrawable retVal = null;
+        while(iter.hasPrevious()) {
+            drawable = iter.previous();
+            if (drawable.containsPoint(x, y)) {
+                retVal = drawable;
+                break;
+            }
+        }
+        return retVal;
+    }
+
+    private void removeCurrentSelectedIndicators() {
+        if (mSelectBorderDecorator != null) {
+            // has previous select, delete it from
+            // mDrawingHistories
+            int replaceIndex =
+                    mDrawingHistories.indexOf(mSelectBorderDecorator);
+            if (-1 != replaceIndex) {
+                mDrawingHistories.add(replaceIndex,
+                        mSelectBorderDecorator.getDrawable());
+                mDrawingHistories.remove(mSelectBorderDecorator);
+                mSelectBorderDecorator = null;
+            }
+        }
+    }
+
+    private void clearAllSelectedIndicators() {
+        IDrawable drawable = null;
+        DrawableDecorator decorator = null;
+        for (int i = 0; i < mDrawingHistories.size(); i++) {
+            drawable = mDrawingHistories.get(i);
+            if (drawable instanceof DrawableDecorator) {
+                decorator = (DrawableDecorator) drawable;
+                mDrawingHistories.add(i, decorator.getDrawable());
+                mDrawingHistories.remove(i + 1);
+            }
+        }
+    }
+
     // TODO this function is unused now
     private boolean wrapSelectIndicator(IDrawable drawable) {
         if (drawable == null) {
@@ -432,19 +445,6 @@ public class PaintBoardView extends View implements
             }
         }
         return false;
-    }
-
-    private void clearAllSelectedIndicators() {
-        IDrawable drawable = null;
-        DrawableDecorator decorator = null;
-        for (int i = 0; i < mDrawingHistories.size(); i++) {
-            drawable = mDrawingHistories.get(i);
-            if (drawable instanceof DrawableDecorator) {
-                decorator = (DrawableDecorator) drawable;
-                mDrawingHistories.add(i, decorator.getDrawable());
-                mDrawingHistories.remove(i + 1);
-            }
-        }
     }
 
 }
