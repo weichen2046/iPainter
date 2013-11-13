@@ -54,13 +54,15 @@ public class PaintBoardView extends View implements
 
         mToolsManager = DrawingToolsManager.getInstance();
         mDrawingHistories = new LinkedList<IDrawable>();
-
-        mToolsManager.registerConfigureChangeEvent(this);
-        
         mRectDirty = new Rect();
+        mMode = DrawingToolsManager.UNKNOWN_MODE;
 
         // init dash paint for drawing when finger move
         initDashPaint();
+
+        // make this register be the last code line in this construct
+        // because we need prepare all fields first
+        mToolsManager.registerConfigureChangeEvent(this);
     }
 
     private void initDashPaint() {
@@ -115,6 +117,9 @@ public class PaintBoardView extends View implements
                 Log.d(TAG, "Unknown mode in touchStart.");
                 break;
         }
+
+        // TODO the next line is for test and need remove
+        mPaint.setColor(mToolsManager.getRandomColor());
     }
 
     private void touchMove(float x, float y) {
@@ -145,8 +150,6 @@ public class PaintBoardView extends View implements
                 Log.d(TAG, "Unknown mode in touch_up.");
                 break;
         }
-        // TODO the next line is for test and need remove
-        mPaint.setColor(mToolsManager.getRandomColor());
     }
 
     private void doPaintModeMove(float x, float y) {
@@ -242,10 +245,15 @@ public class PaintBoardView extends View implements
     }
 
     private void redrawAllGraphicObjects() {
-        // clear board by repaint the background
-        mCanvas.drawColor(mToolsManager.getBoardBackgroundColor());
-        for (IDrawable drawable : mDrawingHistories) {
-            drawable.drawSelf(mCanvas);
+        // if we have prepared mCanvas we can draw it now
+        // because mCanvas only be created after onSizeChanged be called
+        // but this method will be call after
+        if (mCanvas != null) {
+            // clear board by repaint the background
+            mCanvas.drawColor(mToolsManager.getBoardBackgroundColor());
+            for (IDrawable drawable : mDrawingHistories) {
+                drawable.drawSelf(mCanvas);
+            }
         }
     }
 
@@ -309,6 +317,8 @@ public class PaintBoardView extends View implements
                 // if we previous has one selected drawable
                 // remove the selected decorator
                 removeSelectedBorderDecorator();
+                redrawAllGraphicObjects();
+                this.invalidate();
             }
         }
         Log.d(TAG, "onModeChanged called, current mode: " + mMode);
@@ -325,9 +335,6 @@ public class PaintBoardView extends View implements
                         mSelectBorderDecorator.getDrawable());
                 mDrawingHistories.remove(mSelectBorderDecorator);
                 mSelectBorderDecorator = null;
-
-                redrawAllGraphicObjects();
-                this.invalidate();
             }
         }
     }

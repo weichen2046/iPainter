@@ -23,6 +23,7 @@ public class DrawingToolsManager {
 
     private List<OnConfigureChangeListener> mConfigureChangedListeners;
 
+    public static final int UNKNOWN_MODE = -1;
     public static final int SELECT_MODE = 0;
     public static final int PAINT_MODE = 1;
 
