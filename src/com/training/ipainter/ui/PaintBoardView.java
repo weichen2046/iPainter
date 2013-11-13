@@ -343,6 +343,9 @@ public class PaintBoardView extends View implements
         // composite already selected multi drawable object, there may be a
         // bug if clear all selected indicator.
         clearAllSelectedIndicators();
+        // redraw all drawable object to mBitmap to avoid some code
+        // backup current status that may be show's selected indicators
+        redrawAllGraphicObjects();
 
         mSelectedDrawable = getFirstDrawableOnPoint((int) x, (int) y);
         if (mSelectedDrawable != null) {
