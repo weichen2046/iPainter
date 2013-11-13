@@ -303,6 +303,7 @@ public class PaintBoardView extends View implements
                 // finger up
                 // only need to remove all selected indicators
                 clearAllSelectedIndicators();
+                redrawAllGraphicObjects();
                 this.invalidate();
             } else {
                 // if we previous has one selected drawable
