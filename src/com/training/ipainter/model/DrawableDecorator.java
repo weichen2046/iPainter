@@ -28,4 +28,7 @@ public abstract class DrawableDecorator implements IDrawable {
         return mDrawable;
     }
 
+    public void add(IDrawable drawable) {
+        throw new UnsupportedOperationException();
+    }
 }

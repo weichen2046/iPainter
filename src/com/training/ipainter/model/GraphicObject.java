@@ -32,4 +32,8 @@ public abstract class GraphicObject implements IDrawable {
     }
 
     public abstract int getGraphicObjType();
+
+    public void add(IDrawable drawable) {
+        throw new UnsupportedOperationException();
+    }
 }

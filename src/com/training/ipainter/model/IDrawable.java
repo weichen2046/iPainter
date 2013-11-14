@@ -26,5 +26,8 @@ public interface IDrawable {
 
     boolean containsPoint(int x, int y);
 
+    // TODO may be this will be change to isIntersectWith(IDrawable drawable).
     boolean isIntersectWith(Rect rect);
+
+    void add(IDrawable drawable);
 }
