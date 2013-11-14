@@ -347,9 +347,11 @@ public class PaintBoardView extends View implements
             Rect dashRect = Shape.getNormalRect((int) mSX, (int) mSY, (int) x, (int) y);
 
             IDrawable drawable = null;
+            int count = 0;
             for (int i = 0; i < mDrawingHistories.size(); i++) {
                 drawable = mDrawingHistories.get(i);
                 if (drawable.isIntersectWith(dashRect)) {
+                    i++;
                     mDrawingHistories.add(i,
                             new SelectBorderDecorator(drawable));
                     mDrawingHistories.remove(i + 1);
@@ -360,6 +362,13 @@ public class PaintBoardView extends View implements
             // TODO is there need call this.invalidate()?
             // I have test it, seems no need to call this.invalidate(), but I
             // am not sure is there any implicit issues.
+
+            // if only select one or select no drawable, we think this must lead
+            // to single select status. we update the value of mIsSelectMultiple
+            // and we can use the newest value such as update menu etc.
+            if (count < 2) {
+                mIsSelectMultiple = false;
+            }
         }
     }
 
