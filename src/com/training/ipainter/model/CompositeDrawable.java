@@ -7,7 +7,7 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Rect;
 
-public class CompositeDrawable implements IDrawable {
+public class CompositeDrawable extends Shape {
 
     private List<IDrawable> mDrawables = new LinkedList<IDrawable>();
 
@@ -25,19 +25,10 @@ public class CompositeDrawable implements IDrawable {
 
     @Override
     public void adjustPosition(int dx, int dy) {
+        mBounds.offset(dx, dy);
         for (IDrawable drawable : mDrawables) {
             drawable.adjustPosition(dx, dy);
         }
-    }
-
-    @Override
-    public boolean containsPoint(int x, int y) {
-        for (IDrawable drawable : mDrawables) {
-            if (drawable.containsPoint(x, y)) {
-                return true;
-            }
-        }
-        return false;
     }
 
     @Override
@@ -58,10 +49,12 @@ public class CompositeDrawable implements IDrawable {
         if(drawable == null) {
             throw new NullPointerException("drawable must not be null.");
         }
-        if (mDrawables.indexOf(drawable) == -1) {
+        if (mDrawables.indexOf(drawable) != -1) {
             throw new DrawableAlreadyExistException("can not add the same drawable.");
         }
         mDrawables.add(drawable);
+        // update mBounds
+        mBounds.union(drawable.getBounds());
     }
 
 }

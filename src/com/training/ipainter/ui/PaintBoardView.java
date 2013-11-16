@@ -18,7 +18,8 @@ import android.view.MotionEvent;
 import android.view.View;
 
 import com.training.ipainter.drawingtools.DrawingToolsManager;
-import com.training.ipainter.drawingtools.DrawingToolsManager.OnConfigureChangeListener;
+import com.training.ipainter.drawingtools.DrawingToolsManager.INotifyReceiver;
+import com.training.ipainter.model.CompositeDrawable;
 import com.training.ipainter.model.DrawableDecorator;
 import com.training.ipainter.model.IDrawable;
 import com.training.ipainter.model.Rectangle;
@@ -26,8 +27,7 @@ import com.training.ipainter.model.SelectBorderDecorator;
 import com.training.ipainter.model.Shape;
 import com.training.ipainter.utils.RectCoordinateCorrector;
 
-public class PaintBoardView extends View implements
-        OnConfigureChangeListener {
+public class PaintBoardView extends View implements INotifyReceiver {
 
     private static final String TAG = "PaintBoardView";
 
@@ -50,6 +50,7 @@ public class PaintBoardView extends View implements
 
     private DrawingToolsManager mToolsManager;
     private List<IDrawable> mDrawingHistories;
+    private List<IDrawable> mDrawables4Composing;
 
     // use to rectify rect coordinate to keep left always not large than right
     // and top always not large than bottom
@@ -60,6 +61,7 @@ public class PaintBoardView extends View implements
 
         mToolsManager = DrawingToolsManager.getInstance();
         mDrawingHistories = new LinkedList<IDrawable>();
+        mDrawables4Composing = new LinkedList<IDrawable>();
         mRectDirty = new Rect();
         mMode = DrawingToolsManager.UNKNOWN_MODE;
         mRectCoordinateCorrector = new RectCoordinateCorrector();
@@ -154,6 +156,27 @@ public class PaintBoardView extends View implements
         return 0;
     }
 
+    @Override
+    public void onActions(int actions) {
+        if ((actions & DrawingToolsManager.COMPOSITE_ACTION)
+                == DrawingToolsManager.COMPOSITE_ACTION) {
+            Log.d(TAG, "Composite action received.");
+            doComposite();
+        } else if ((actions & DrawingToolsManager.DECOMPOSITE_ACTION)
+                == DrawingToolsManager.DECOMPOSITE_ACTION) {
+            Log.d(TAG, "Decomposite action received.");
+            doDecomposite();
+        } else if ((actions & DrawingToolsManager.UNDO_ACTION)
+                == DrawingToolsManager.UNDO_ACTION) {
+            Log.d(TAG, "Undo action received.");
+            undo();
+        } else if ((actions & DrawingToolsManager.REDO_ACTION)
+                == DrawingToolsManager.REDO_ACTION) {
+            Log.d(TAG, "Redo action received.");
+            redo();
+        }
+    }
+
     private void touchStart(float x, float y) {
         mSX = x;
         mSY = y;
@@ -219,6 +242,10 @@ public class PaintBoardView extends View implements
         // redraw all drawable object to mBitmap to avoid some code
         // backup current status that may be show's selected indicators
         redrawAllGraphicObjects();
+
+        // not allow composable or decomposable
+        mToolsManager
+                .setComposableStatus(DrawingToolsManager.COMPOSABLE_DECOMPOSABLE_BOTH_DISABLE);
 
         mSelectedDrawable = getFirstDrawableOnPoint((int) x, (int) y);
         if (mSelectedDrawable != null) {
@@ -338,8 +365,6 @@ public class PaintBoardView extends View implements
     private void doSelectModeUp(float x, float y) {
         // mSelectedDrawable may be a GraphicObject, may be a
         // SelectedBorderDecorator
-        // TODO we don't need the next line
-        mSelectedDrawable = null;
 
         if (mIsSelectMultiple) {
             // erase the dash rect
@@ -347,14 +372,15 @@ public class PaintBoardView extends View implements
             Rect dashRect = Shape.getNormalRect((int) mSX, (int) mSY, (int) x, (int) y);
 
             IDrawable drawable = null;
-            int count = 0;
+            mDrawables4Composing.clear();
+            SelectBorderDecorator decorator = null;
             for (int i = 0; i < mDrawingHistories.size(); i++) {
                 drawable = mDrawingHistories.get(i);
                 if (drawable.isIntersectWith(dashRect)) {
-                    count++;
-                    mDrawingHistories.add(i,
-                            new SelectBorderDecorator(drawable));
-                    mDrawingHistories.remove(i + 1);
+                    decorator = new SelectBorderDecorator(drawable);
+                    mDrawingHistories.add(i, decorator);
+                    mDrawingHistories.remove(i + 1); // remove origin object
+                    mDrawables4Composing.add(decorator);
                 }
             }
             // redraw all drawable object in mDrawingHistories
@@ -366,10 +392,77 @@ public class PaintBoardView extends View implements
             // if only select one or select no drawable, we think this must lead
             // to single select status. we update the value of mIsSelectMultiple
             // and we can use the newest value such as update menu etc.
-            if (count < 2) {
+            if (mDrawables4Composing.size() < 2) {
                 mIsSelectMultiple = false;
+                mToolsManager
+                        .setComposableStatus(DrawingToolsManager.COMPOSABLE_DECOMPOSABLE_BOTH_DISABLE);
+                // if the only one drawable object is a composite drawable
+                // we need to mark allow decomposable action.
+                if (mDrawables4Composing.size() == 1
+                        && (mDrawables4Composing.get(0) instanceof CompositeDrawable)) {
+                            mToolsManager
+                                .setComposableStatus(DrawingToolsManager.DECOMPOSABLE_ENABLE);
+                }
+            } else {
+                mToolsManager
+                        .setComposableStatus(DrawingToolsManager.COMPOSABLE_ENABLE);
+            }
+        } else {
+            if (!(mSelectedDrawable == null)
+                    && (mSelectedDrawable instanceof CompositeDrawable)) {
+                mToolsManager
+                        .setComposableStatus(DrawingToolsManager.DECOMPOSABLE_ENABLE);
             }
         }
+        mSelectedDrawable = null;
+    }
+
+    private void doComposite() {
+        if (mDrawables4Composing.size() > 1) {
+            CompositeDrawable comp = new CompositeDrawable();
+            IDrawable drawable = null;
+            int index = -1;
+            // z-order is the same order with index in this list
+            for (int i = 0; i < mDrawables4Composing.size(); i++) {
+                drawable = mDrawables4Composing.get(i);
+                // the last object in mDrawables4Composing
+                if ((i + 1) == mDrawables4Composing.size()) {
+                    index = mDrawingHistories.indexOf(drawable);
+                    // the composite drawable object's z-order in
+                    // mDrawingHistories will equals to the last drawable object
+                    // in mDrawables4Composing's z-order in mDrawingHistories
+                    mDrawingHistories.add(index,
+                            new SelectBorderDecorator(comp));
+                }
+                mDrawingHistories.remove(drawable);
+                if (drawable instanceof SelectBorderDecorator) {
+                    comp.add(((SelectBorderDecorator) drawable).getDrawable());
+                } else {
+                    // error, only a SelectBorderDecorator
+                    Log.e(TAG,
+                            "Error, not a SelectBorderDecorator is not a selected drawable");
+                }
+            }
+            mDrawables4Composing.clear();
+            // refresh current painter board
+            redrawAllGraphicObjects();
+            this.invalidate();
+            // allow decomposable
+            mToolsManager
+                    .setComposableStatus(DrawingToolsManager.DECOMPOSABLE_ENABLE);
+        }
+    }
+
+    private void doDecomposite() {
+
+    }
+
+    private void undo() {
+
+    }
+
+    private void redo() {
+
     }
 
     private void onModeChanging(int newMode) {

@@ -30,4 +30,6 @@ public interface IDrawable {
     boolean isIntersectWith(Rect rect);
 
     void add(IDrawable drawable);
+
+    Rect getBounds();
 }

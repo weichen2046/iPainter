@@ -2,6 +2,7 @@ package com.training.ipainter.model;
 
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.graphics.Rect;
 
 public abstract class DrawableDecorator implements IDrawable {
 
@@ -24,6 +25,11 @@ public abstract class DrawableDecorator implements IDrawable {
         mDrawable.setPaint(paint);
     }
 
+    @Override
+    public Rect getBounds() {
+        return mDrawable.getBounds();
+    }
+
     public IDrawable getDrawable() {
         return mDrawable;
     }
@@ -31,4 +37,5 @@ public abstract class DrawableDecorator implements IDrawable {
     public void add(IDrawable drawable) {
         throw new UnsupportedOperationException();
     }
+
 }

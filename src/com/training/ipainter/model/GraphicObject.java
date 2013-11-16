@@ -4,6 +4,7 @@
 package com.training.ipainter.model;
 
 import android.graphics.Paint;
+import android.graphics.Rect;
 
 /**
  * @author chenwei
@@ -15,9 +16,16 @@ public abstract class GraphicObject implements IDrawable {
 
     public static final int GRAPHIC_LINE_TYPE = 0;
     public static final int GRAPHIC_SHAPE_TYPE = 1;
+    public static final int GRAPHIC_COMPOSITE_TYPE = 2;
+
+    /**
+     * the smallest rectangle that can hold this shape.
+     */
+    protected Rect mBounds;
 
     public GraphicObject() {
         mPaint = new Paint();
+        mBounds = new Rect();
     }
 
     @Override
@@ -35,5 +43,9 @@ public abstract class GraphicObject implements IDrawable {
 
     public void add(IDrawable drawable) {
         throw new UnsupportedOperationException();
+    }
+
+    public Rect getBounds() {
+        return mBounds;
     }
 }

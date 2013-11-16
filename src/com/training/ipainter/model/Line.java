@@ -14,14 +14,20 @@ import android.graphics.Rect;
 public class Line extends GraphicObject {
 
     private Point mStart;
-    private Point mStop;
+    private Point mEnd;
+
+    public Line(int sX, int sY, int eX, int eY) {
+        mStart = new Point(sX, sY);
+        mEnd = new Point(eX, eY);
+        mBounds.set(sX, sY, eX, eY);
+    }
 
     /* (non-Javadoc)
      * @see com.training.ipainter.model.IDrawable#drawSelf(android.graphics.Canvas, android.graphics.Paint)
      */
     @Override
     public void drawSelf(Canvas canvas) {
-        canvas.drawLine(mStart.x, mStart.y, mStop.x, mStop.y, mPaint);
+        canvas.drawLine(mStart.x, mStart.y, mEnd.x, mEnd.y, mPaint);
     }
 
     @Override
@@ -32,7 +38,7 @@ public class Line extends GraphicObject {
 
     @Override
     public int getGraphicObjType() {
-        return GraphicObject.GRAPHIC_LINE_TYPE;
+        return GRAPHIC_LINE_TYPE;
     }
 
     @Override

@@ -13,18 +13,14 @@ import com.training.ipainter.utils.RectCoordinateCorrector;
  */
 public abstract class Shape extends GraphicObject {
 
-    /**
-     * the smallest rectangle that can hold this shape.
-     */
-    protected Rect mBounds;
-
-    public Shape() {
-        mBounds = new Rect();
-    }
-
     @Override
     public boolean containsPoint(int x, int y) {
         return mBounds.contains(x, y);
+    }
+
+    @Override
+    public int getGraphicObjType() {
+        return GRAPHIC_SHAPE_TYPE;
     }
 
     /**

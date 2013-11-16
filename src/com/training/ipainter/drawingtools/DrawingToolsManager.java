@@ -20,8 +20,9 @@ public class DrawingToolsManager {
     private Paint mPaint;
     private int mMode;
     private int mBrushType;
+    private int mComposableStatus;
 
-    private List<OnConfigureChangeListener> mConfigureChangedListeners;
+    private List<INotifyReceiver> mNotifyReceivers;
 
     public static final int UNKNOWN_MODE = -1;
     public static final int SELECT_MODE = 0;
@@ -35,6 +36,16 @@ public class DrawingToolsManager {
     public static final int BRUSH_TYPE_CHANGE_FLAG = MODE_CHANGE_FLAG << 1;
     public static final int PAINT_CHANGE_FLAG = BRUSH_TYPE_CHANGE_FLAG << 1;
     public static final int ALL_CHANGE_FLAG = 0xFFFFFFFF;
+
+    public static final int ACTION_FLAG = 1;
+    public static final int COMPOSITE_ACTION = ACTION_FLAG << 1;
+    public static final int DECOMPOSITE_ACTION = ACTION_FLAG << 2;
+    public static final int UNDO_ACTION = ACTION_FLAG << 3;
+    public static final int REDO_ACTION = ACTION_FLAG << 4;
+
+    public static final int COMPOSABLE_DECOMPOSABLE_BOTH_DISABLE = 0;
+    public static final int COMPOSABLE_ENABLE = 1;
+    public static final int DECOMPOSABLE_ENABLE = 2;
 
     private DrawingToolsManager() {
         resetToDefault();
@@ -93,18 +104,16 @@ public class DrawingToolsManager {
         triggerConfigureChangedEvent(PAINT_CHANGE_FLAG);
     }
 
-    public void registerConfigureChangeEvent(
-            OnConfigureChangeListener listener) {
+    public void registerConfigureChangeEvent(INotifyReceiver listener) {
         if (listener == null) {
             throw new IllegalArgumentException(
                     "Parameter listener can not be null.");
         }
-        if (mConfigureChangedListeners == null) {
-            mConfigureChangedListeners =
-                    new LinkedList<OnConfigureChangeListener>();
+        if (mNotifyReceivers == null) {
+            mNotifyReceivers = new LinkedList<INotifyReceiver>();
         }
         listener.onConfigureChanged(ALL_CHANGE_FLAG);
-        mConfigureChangedListeners.add(listener);
+        mNotifyReceivers.add(listener);
 
     }
 
@@ -128,17 +137,35 @@ public class DrawingToolsManager {
         triggerConfigureChangedEvent(BRUSH_TYPE_CHANGE_FLAG);
     }
 
-    public interface OnConfigureChangeListener {
+    public void setComposableStatus(int status) {
+        mComposableStatus = status;
+    }
+
+    public int getComposableStatus() {
+        return mComposableStatus;
+    }
+
+    public interface INotifyReceiver {
         int getInterestingChangeSet();
         int onConfigureChanged(int changedFlags);
+
+        void onActions(int actions);
     }
 
     private void triggerConfigureChangedEvent(int changedFlags) {
-        if (mConfigureChangedListeners != null) {
-            for (OnConfigureChangeListener listener : mConfigureChangedListeners) {
-                if ((listener.getInterestingChangeSet() & changedFlags) != 0) {
-                    listener.onConfigureChanged(changedFlags);
+        if (mNotifyReceivers != null) {
+            for (INotifyReceiver receiver : mNotifyReceivers) {
+                if ((receiver.getInterestingChangeSet() & changedFlags) != 0) {
+                    receiver.onConfigureChanged(changedFlags);
                 }
+            }
+        }
+    }
+
+    public void sendActions(int actions) {
+        if (mNotifyReceivers != null) {
+            for (INotifyReceiver receiver : mNotifyReceivers) {
+                receiver.onActions(actions);
             }
         }
     }
