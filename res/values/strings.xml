@@ -2,5 +2,13 @@
 <resources>
 
     <string name="app_name">iPainter</string>
+    <string name="paint_mode">Paint Mode</string>
+    <string name="select_mode">Select Mode</string>
+    <string name="mode_select">Change Mode</string>
+    <string name="composite">Composite</string>
+    <string name="decomposite">Decomposite</string>
+    <string name="composable_not_available">Composite/Decomposite Disable</string>
+    <string name="undo">Undo</string>
+    <string name="redo">Redo</string>
 
 </resources>
