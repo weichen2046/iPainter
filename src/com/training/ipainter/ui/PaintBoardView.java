@@ -351,7 +351,7 @@ public class PaintBoardView extends View implements
             for (int i = 0; i < mDrawingHistories.size(); i++) {
                 drawable = mDrawingHistories.get(i);
                 if (drawable.isIntersectWith(dashRect)) {
-                    i++;
+                    count++;
                     mDrawingHistories.add(i,
                             new SelectBorderDecorator(drawable));
                     mDrawingHistories.remove(i + 1);
