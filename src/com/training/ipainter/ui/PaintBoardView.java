@@ -310,23 +310,23 @@ public class PaintBoardView extends View implements
         // TODO need refactoring for using Factory Pattern
         IDrawable drawable = null;
         switch (mBrushType) {
-            case DrawingToolsManager.BRUSH_LINE:
-                break;
-            case DrawingToolsManager.BRUSH_RECT:
-                mCanvas.drawRect((int) mSX, (int) mSY, (int) x, (int) y, mPaint);
-                mRectCoordinateCorrector.rectifyCoordinate((int) mSX, (int) mSY,
-                        (int) x, (int) y);
-                drawable = new Rectangle(mRectCoordinateCorrector.mLeft,
-                        mRectCoordinateCorrector.mTop,
-                        mRectCoordinateCorrector.mRight,
-                        mRectCoordinateCorrector.mBottom);
-                drawable.setPaint(mPaint);
-                break;
-            case DrawingToolsManager.BRUSH_CIRCLE:
-                break;
-            default:
-                Log.d(TAG, "Unknown brush type.");
-                break;
+        case DrawingToolsManager.BRUSH_LINE:
+            break;
+        case DrawingToolsManager.BRUSH_RECT:
+            mCanvas.drawRect((int) mSX, (int) mSY, (int) x, (int) y, mPaint);
+            mRectCoordinateCorrector.rectifyCoordinate((int) mSX, (int) mSY,
+                    (int) x, (int) y);
+            drawable = new Rectangle(mRectCoordinateCorrector.mLeft,
+                    mRectCoordinateCorrector.mTop,
+                    mRectCoordinateCorrector.mRight,
+                    mRectCoordinateCorrector.mBottom);
+            drawable.setPaint(mPaint);
+            break;
+        case DrawingToolsManager.BRUSH_CIRCLE:
+            break;
+        default:
+            Log.d(TAG, "Unknown brush type.");
+            break;
         }
         if (drawable != null) {
             mDrawingHistories.add(drawable);
