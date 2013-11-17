@@ -250,7 +250,7 @@ public class PaintBoardView extends View implements INotifyReceiver {
         mSelectedDrawable = getFirstDrawableOnPoint((int) x, (int) y);
         if (mSelectedDrawable != null) {
             if (mSelectedDrawable instanceof DrawableDecorator) {
-                // previous select, doing nothing
+                // TODO this route will never reach, must delete
             } else {
                 removeCurrentSelectedIndicators();
                 // TODO may be new a SelectBorderDecorator not here
@@ -414,7 +414,6 @@ public class PaintBoardView extends View implements INotifyReceiver {
                         .setComposableStatus(DrawingToolsManager.DECOMPOSABLE_ENABLE);
             }
         }
-        mSelectedDrawable = null;
     }
 
     private void doComposite() {
@@ -431,8 +430,8 @@ public class PaintBoardView extends View implements INotifyReceiver {
                     // the composite drawable object's z-order in
                     // mDrawingHistories will equals to the last drawable object
                     // in mDrawables4Composing's z-order in mDrawingHistories
-                    mDrawingHistories.add(index,
-                            new SelectBorderDecorator(comp));
+                    mSelectedDrawable = comp;
+                    mDrawingHistories.add(index, new SelectBorderDecorator(comp));
                 }
                 mDrawingHistories.remove(drawable);
                 if (drawable instanceof SelectBorderDecorator) {
@@ -454,7 +453,28 @@ public class PaintBoardView extends View implements INotifyReceiver {
     }
 
     private void doDecomposite() {
-
+        if (!(mSelectedDrawable == null)
+                && (mSelectedDrawable instanceof CompositeDrawable)) {
+            CompositeDrawable composites = (CompositeDrawable) mSelectedDrawable;
+            // only a selected CompositeDrawable can be decomposite
+            List<IDrawable> drawables = composites.getCompositedDrawables();
+            if (composites != null && drawables != null) {
+                // int insertIndex =
+                // mDrawingHistories.indexOf(mSelectedDrawable);
+                int insertIndex = indexOfDrawableIgnoreSelectBorderDecorator(mSelectedDrawable);
+                mDrawingHistories.remove(insertIndex);
+                for (IDrawable drawable : drawables) {
+                    // do insert
+                    mDrawingHistories.add(insertIndex++, drawable);
+                }
+                // make last drawable selected
+                mSelectedDrawable = mDrawingHistories.remove(insertIndex - 1);
+                mDrawingHistories.add(new SelectBorderDecorator(mSelectedDrawable));
+                drawables.clear();
+                redrawAllGraphicObjects();
+                this.invalidate();
+            }
+        }
     }
 
     private void undo() {
@@ -563,6 +583,21 @@ public class PaintBoardView extends View implements INotifyReceiver {
             }
         }
         return false;
+    }
+
+    private int indexOfDrawableIgnoreSelectBorderDecorator(IDrawable drawable) {
+        int index = 0;
+        for (IDrawable drawObj : mDrawingHistories) {
+            if(drawObj instanceof SelectBorderDecorator) {
+                if(((SelectBorderDecorator)drawObj).getDrawable() == drawable) {
+                    return index;
+                }
+            } else if (drawObj == drawable) {
+                return index;
+            }
+            index++;
+        }
+        return -1;
     }
 
 }

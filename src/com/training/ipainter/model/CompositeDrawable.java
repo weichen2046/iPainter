@@ -57,4 +57,11 @@ public class CompositeDrawable extends Shape {
         mBounds.union(drawable.getBounds());
     }
 
+    public List<IDrawable> getCompositedDrawables() {
+        if (mDrawables.size() == 0) {
+            return null;
+        }
+        return mDrawables;
+    }
+
 }
