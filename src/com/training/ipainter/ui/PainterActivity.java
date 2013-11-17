@@ -11,6 +11,7 @@ import android.view.MenuItem;
 
 import com.training.ipainter.R;
 import com.training.ipainter.drawingtools.DrawingToolsManager;
+import com.training.ipainter.model.MementoManager;
 
 /**
  *
@@ -24,11 +25,15 @@ public class PainterActivity extends Activity {
     private static final int UNDO_MENU = Menu.FIRST + 3;
     private static final int REDO_MENU = Menu.FIRST + 4;
 
+    private MementoManager mMementoManager;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.main);
+
+        mMementoManager = MementoManager.getInstance();
     }
 
     @Override
@@ -71,6 +76,12 @@ public class PainterActivity extends Activity {
                     "Unknow composable status, " + tools.getComposableStatus());
             break;
         }
+
+        item = (MenuItem) menu.findItem(UNDO_MENU);
+        item.setEnabled(mMementoManager.canUndo());
+        item = (MenuItem) menu.findItem(REDO_MENU);
+        item.setEnabled(mMementoManager.canRedo());
+
         return true;
     }
 

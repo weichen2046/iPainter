@@ -63,4 +63,9 @@ public class SelectBorderDecorator extends DrawableDecorator {
         return mDrawable.isIntersectWith(rect);
     }
 
+    @Override
+    public void setBounds(Rect rect) {
+        mDrawable.setBounds(rect);
+    }
+
 }

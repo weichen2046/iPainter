@@ -32,4 +32,6 @@ public interface IDrawable {
     void add(IDrawable drawable);
 
     Rect getBounds();
+
+    void setBounds(Rect rect);
 }

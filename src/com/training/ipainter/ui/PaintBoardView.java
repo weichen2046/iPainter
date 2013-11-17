@@ -22,6 +22,7 @@ import com.training.ipainter.drawingtools.DrawingToolsManager.INotifyReceiver;
 import com.training.ipainter.model.CompositeDrawable;
 import com.training.ipainter.model.DrawableDecorator;
 import com.training.ipainter.model.IDrawable;
+import com.training.ipainter.model.MementoManager;
 import com.training.ipainter.model.Rectangle;
 import com.training.ipainter.model.SelectBorderDecorator;
 import com.training.ipainter.model.Shape;
@@ -52,6 +53,8 @@ public class PaintBoardView extends View implements INotifyReceiver {
     private List<IDrawable> mDrawingHistories;
     private List<IDrawable> mDrawables4Composing;
 
+    private MementoManager mMementoManager;
+
     // use to rectify rect coordinate to keep left always not large than right
     // and top always not large than bottom
     private RectCoordinateCorrector mRectCoordinateCorrector;
@@ -65,6 +68,7 @@ public class PaintBoardView extends View implements INotifyReceiver {
         mRectDirty = new Rect();
         mMode = DrawingToolsManager.UNKNOWN_MODE;
         mRectCoordinateCorrector = new RectCoordinateCorrector();
+        mMementoManager = MementoManager.getInstance();
 
         // init dash paint for drawing when finger move
         initDashPaint();
@@ -249,6 +253,7 @@ public class PaintBoardView extends View implements INotifyReceiver {
 
         mSelectedDrawable = getFirstDrawableOnPoint((int) x, (int) y);
         if (mSelectedDrawable != null) {
+            mMementoManager.setPrevRect(mSelectedDrawable.getBounds());
             if (mSelectedDrawable instanceof DrawableDecorator) {
                 // TODO this route will never reach, must delete
             } else {
@@ -325,6 +330,7 @@ public class PaintBoardView extends View implements INotifyReceiver {
             // start move select GraphicObject
             float dx = x - mPX;
             float dy = y - mPY;
+            Log.d(TAG, String.format("dx: %d, dy: %d", (int) dx, (int) dy));
             mSelectedDrawable.adjustPosition((int) dx, (int) dy);
             redrawAllGraphicObjects();
             this.invalidate();
@@ -359,6 +365,7 @@ public class PaintBoardView extends View implements INotifyReceiver {
             mDrawingHistories.add(drawable);
             Log.d(TAG, "new drawable object added, now size is: "
                     + mDrawingHistories.size());
+            // TODO create undoable memento
         }
     }
 
@@ -408,10 +415,15 @@ public class PaintBoardView extends View implements INotifyReceiver {
                         .setComposableStatus(DrawingToolsManager.COMPOSABLE_ENABLE);
             }
         } else {
+            mMementoManager.setCurrentRect(mSelectedDrawable.getBounds());
             if (!(mSelectedDrawable == null)
                     && (mSelectedDrawable instanceof CompositeDrawable)) {
                 mToolsManager
                         .setComposableStatus(DrawingToolsManager.DECOMPOSABLE_ENABLE);
+            }
+            // TODO create undoable memento
+            if (mMementoManager.isPositionChanged()) {
+                mMementoManager.addPositionChangedMemento(mSelectedDrawable);
             }
         }
     }
@@ -478,11 +490,15 @@ public class PaintBoardView extends View implements INotifyReceiver {
     }
 
     private void undo() {
-
+        mMementoManager.undo();
+        redrawAllGraphicObjects();
+        this.invalidate();
     }
 
     private void redo() {
-
+        mMementoManager.redo();
+        redrawAllGraphicObjects();
+        this.invalidate();
     }
 
     private void onModeChanging(int newMode) {

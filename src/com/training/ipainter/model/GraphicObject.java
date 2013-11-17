@@ -48,4 +48,8 @@ public abstract class GraphicObject implements IDrawable {
     public Rect getBounds() {
         return mBounds;
     }
+
+    public void setBounds(Rect rect) {
+        mBounds.set(rect);
+    }
 }
