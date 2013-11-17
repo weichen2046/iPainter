@@ -1,5 +1,6 @@
 package com.training.ipainter.model;
 
+import java.util.List;
 import java.util.Stack;
 
 import android.graphics.Rect;
@@ -16,6 +17,7 @@ public class MementoManager {
 
     private Rect mPrevRect;
     private Rect mCurrentRect;
+    private List<IDrawable> mDrawingHistories;
 
     private Stack<Memento> mUndos = new Stack<Memento>();
     private Stack<Memento> mRedos = new Stack<Memento>();
@@ -45,6 +47,10 @@ public class MementoManager {
         mCurrentRect.set(rect);
     }
 
+    public void setDrawingHistories(List<IDrawable> histories) {
+        mDrawingHistories = histories;
+    }
+
     public boolean isPositionChanged() {
         return !mPrevRect.equals(mCurrentRect);
     }
@@ -58,29 +64,40 @@ public class MementoManager {
     }
 
     public void undo() {
-        Memento undoMem = mUndos.pop();
-        switch (undoMem.mUndoableType) {
+        Memento mem = mUndos.pop();
+        switch (mem.mUndoableType) {
             case POSITION_CHANGE_UNDO_TYPE:
-                PositionChangeMementoData data = (PositionChangeMementoData) undoMem.mData;
-                undoMem.mDrawable.setBounds(data.mSrc);
+                PositionChangeMementoData data = (PositionChangeMementoData) mem.mData;
+                mem.mDrawable.setBounds(data.mSrc);
+                break;
+            case CREATE_UNDO_TYPE:
+                int index = Integer.valueOf(mem.mData.toString());
+                // if (undoMem.mDrawable != mDrawingHistories.get(index)) {
+                // // wrap by a SelectBorderDecorator
+                // }
+                mDrawingHistories.remove(index);
                 break;
             default:
                 break;
         }
-        mRedos.push(undoMem);
+        mRedos.push(mem);
     }
 
     public void redo() {
-        Memento redoMem = mRedos.pop();
-        switch (redoMem.mUndoableType) {
+        Memento mem = mRedos.pop();
+        switch (mem.mUndoableType) {
             case POSITION_CHANGE_UNDO_TYPE:
-                PositionChangeMementoData data = (PositionChangeMementoData) redoMem.mData;
-                redoMem.mDrawable.setBounds(data.mDest);
+                PositionChangeMementoData data = (PositionChangeMementoData) mem.mData;
+                mem.mDrawable.setBounds(data.mDest);
+                break;
+            case CREATE_UNDO_TYPE:
+                int index = Integer.valueOf(mem.mData.toString());
+                mDrawingHistories.add(index, mem.mDrawable);
                 break;
             default:
                 break;
         }
-        mUndos.push(redoMem);
+        mUndos.push(mem);
     }
 
     public void addPositionChangedMemento(IDrawable drawable) {
@@ -88,6 +105,14 @@ public class MementoManager {
         mem.mDrawable = drawable;
         mem.mUndoableType = POSITION_CHANGE_UNDO_TYPE;
         mem.mData = new PositionChangeMementoData(mPrevRect, mCurrentRect);
+        mUndos.push(mem);
+    }
+
+    public void addCreationMemento(IDrawable drawable, int index) {
+        Memento mem = new Memento();
+        mem.mDrawable = drawable;
+        mem.mUndoableType = CREATE_UNDO_TYPE;
+        mem.mData = index;
         mUndos.push(mem);
     }
 

@@ -69,6 +69,7 @@ public class PaintBoardView extends View implements INotifyReceiver {
         mMode = DrawingToolsManager.UNKNOWN_MODE;
         mRectCoordinateCorrector = new RectCoordinateCorrector();
         mMementoManager = MementoManager.getInstance();
+        mMementoManager.setDrawingHistories(mDrawingHistories);
 
         // init dash paint for drawing when finger move
         initDashPaint();
@@ -366,6 +367,7 @@ public class PaintBoardView extends View implements INotifyReceiver {
             Log.d(TAG, "new drawable object added, now size is: "
                     + mDrawingHistories.size());
             // TODO create undoable memento
+            mMementoManager.addCreationMemento(drawable, mDrawingHistories.size() - 1);
         }
     }
 
