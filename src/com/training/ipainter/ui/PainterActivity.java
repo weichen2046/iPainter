@@ -5,6 +5,8 @@ package com.training.ipainter.ui;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -19,20 +21,45 @@ import com.training.ipainter.model.MementoManager;
 public class PainterActivity extends Activity {
 
     private static final String TAG = "PainterActivity";
-
+    private ToolbarLayout mToolbarPanel;
+    private PaintBoardView mBoarderView;
+    protected static final int BORDER_TO_BACK = 1;
+    protected static final int TOOLS_TO_BACK = 2;
     private static final int MODE_CHANGE_MENU = Menu.FIRST + 1;
     private static final int COMPOSITE_MENU = Menu.FIRST + 2;
     private static final int UNDO_MENU = Menu.FIRST + 3;
     private static final int REDO_MENU = Menu.FIRST + 4;
-
     private MementoManager mMementoManager;
+    @SuppressWarnings("unused")
+    private Handler mHander = new Handler() {
 
+        @Override
+        public void handleMessage(Message msg) {
+            switch(msg.what) {
+                case BORDER_TO_BACK:
+                    mToolbarPanel.bringToFront();
+                    Log.v("TAG","handle scrollToScreen(1)");
+                    mToolbarPanel.scrollToScreen(1);
+                    break;
+                case TOOLS_TO_BACK:
+                    mBoarderView.bringToFront();
+                    Log.v("TAG","handle scrollToScreen(2)");
+                    mToolbarPanel.scrollToScreen(2);
+                    break;
+                default:
+                    break;
+            }
+        }
+    };
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.main);
-
+        mToolbarPanel = (ToolbarLayout)findViewById(R.id.my_scrollLayout);
+        mBoarderView = (PaintBoardView)findViewById(R.id.paint_border);
+        mBoarderView.setHandler(mHander);
+        mToolbarPanel.setHandler(mHander);
         mMementoManager = MementoManager.getInstance();
     }
 

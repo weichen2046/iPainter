@@ -7,12 +7,16 @@ import java.util.ListIterator;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.DashPathEffect;
 import android.graphics.Paint;
 import android.graphics.Paint.Style;
 import android.graphics.PathEffect;
 import android.graphics.Rect;
+import android.os.Handler;
+import android.os.Message;
 import android.util.AttributeSet;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
@@ -114,7 +118,10 @@ public class PaintBoardView extends View implements INotifyReceiver {
     protected void onDraw(Canvas canvas) {
         canvas.drawBitmap(mBitmap, 0, 0, null);
     }
-
+    private Handler mHander4Parent;
+    public void setHandler(Handler handler) {
+        mHander4Parent = handler;
+    }
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         float x = event.getX();
@@ -181,55 +188,79 @@ public class PaintBoardView extends View implements INotifyReceiver {
             redo();
         }
     }
-
+    private DisplayMetrics dm = getResources().getDisplayMetrics();
+    private boolean mActiveBringToolsPanel = false;
+    private int minLength = 50;
+    private boolean isOutside = false;
     private void touchStart(float x, float y) {
         mSX = x;
         mSY = y;
-
-        switch (mMode) {
-            case DrawingToolsManager.PAINT_MODE:
-                // backup current bitmap on paint board
-                mCanvas4Backup.drawBitmap(mBitmap, 0, 0, null);
-                break;
-            case DrawingToolsManager.SELECT_MODE:
-                doSelectModeStart(x, y);
-                break;
-            default:
-                Log.d(TAG, "Unknown mode in touchStart.");
-                break;
+        if(x > dm.widthPixels -minLength) {
+            if(isOutside == false){
+                mActiveBringToolsPanel = true;
+                mDeatDistance = 0;
+                isOutside = true;
+            }
+        }else{
+            switch (mMode) {
+                case DrawingToolsManager.PAINT_MODE:
+                    // backup current bitmap on paint board
+                    mCanvas4Backup.drawBitmap(mBitmap, 0, 0, null);
+                    break;
+                case DrawingToolsManager.SELECT_MODE:
+                    doSelectModeStart(x, y);
+                    break;
+                default:
+                    Log.d(TAG, "Unknown mode in touchStart.");
+                    break;
+            }
+            // TODO the next line is for test and need remove
         }
-
-        // TODO the next line is for test and need remove
-        mPaint.setColor(mToolsManager.getRandomColor());
     }
-
+    private float mDeatDistance;
+    private boolean needToolbar = false;
     private void touchMove(float x, float y) {
-        switch (mMode) {
-            case DrawingToolsManager.PAINT_MODE:
-                doPaintModeMove(x, y);
-                break;
-            case DrawingToolsManager.SELECT_MODE:
-                doSelectModeMove(x, y);
-                break;
-            default:
-                Log.d(TAG, "Unknown mode in touch_move.");
-                break;
+        if(mActiveBringToolsPanel) {
+            mDeatDistance = mSX -x;
+            if(mDeatDistance > minLength && isOutside == true) {
+              // 2 bring tools panel front of parent
+              Message msg = mHander4Parent.obtainMessage(PainterActivity.BORDER_TO_BACK);
+              isOutside = false;
+              mHander4Parent.sendMessage(msg);
+            }
+        }else{
+            switch (mMode) {
+                case DrawingToolsManager.PAINT_MODE:
+                    doPaintModeMove(x, y);
+                    break;
+                case DrawingToolsManager.SELECT_MODE:
+                    doSelectModeMove(x, y);
+                    break;
+                default:
+                    Log.d(TAG, "Unknown mode in touch_move.");
+                    break;
+            }
         }
     }
 
     private void touchUp(float x, float y) {
         // TODO
         // new IDrawable object and add to
-        switch (mMode) {
-            case DrawingToolsManager.PAINT_MODE:
-                doPaintModeUp(x, y);
-                break;
-            case DrawingToolsManager.SELECT_MODE:
-                doSelectModeUp(x, y);
-                break;
-            default:
-                Log.d(TAG, "Unknown mode in touch_up.");
-                break;
+        if(mActiveBringToolsPanel){
+            mActiveBringToolsPanel = false;
+        }
+        else{
+            switch (mMode) {
+                case DrawingToolsManager.PAINT_MODE:
+                    doPaintModeUp(x, y);
+                    break;
+                case DrawingToolsManager.SELECT_MODE:
+                    doSelectModeUp(x, y);
+                    break;
+                default:
+                    Log.d(TAG, "Unknown mode in touch_up.");
+                    break;
+            }
         }
     }
 
