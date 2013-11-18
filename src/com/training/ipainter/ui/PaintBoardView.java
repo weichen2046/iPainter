@@ -7,7 +7,6 @@ import java.util.ListIterator;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.DashPathEffect;
 import android.graphics.Paint;
 import android.graphics.Paint.Style;
@@ -58,6 +57,18 @@ public class PaintBoardView extends View implements INotifyReceiver {
     private List<IDrawable> mDrawables4Composing;
 
     private MementoManager mMementoManager;
+
+    // handler for bring tools panel up, defined in PainterActivity
+    private Handler mHander4Parent;
+    private DisplayMetrics mDisplayMetrics = getResources().getDisplayMetrics();
+    private boolean mStartToBringToolsPanel = false;
+    // if finger moved distance larger than
+    // MIN_MOVE_DISTANCE_FOR_TRIGGER_TOOLS_PANEL and tools panel be marked to
+    // show up, then we start to bring tools panel show up
+    private static final int MIN_MOVE_DISTANCE_FOR_TRIGGER_TOOLS_PANEL = 20;
+    // if the distance between finger start point and right side of the screen
+    // we mark tools panel to be show up to true, 8 is a expeirential value
+    private static final int MIN_WIDTH_FOR_MARK_TOOLS_PANEL_TRIGGER_START = 8;
 
     // use to rectify rect coordinate to keep left always not large than right
     // and top always not large than bottom
@@ -118,10 +129,7 @@ public class PaintBoardView extends View implements INotifyReceiver {
     protected void onDraw(Canvas canvas) {
         canvas.drawBitmap(mBitmap, 0, 0, null);
     }
-    private Handler mHander4Parent;
-    public void setHandler(Handler handler) {
-        mHander4Parent = handler;
-    }
+
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         float x = event.getX();
@@ -188,20 +196,22 @@ public class PaintBoardView extends View implements INotifyReceiver {
             redo();
         }
     }
-    private DisplayMetrics dm = getResources().getDisplayMetrics();
-    private boolean mActiveBringToolsPanel = false;
-    private int minLength = 50;
-    private boolean isOutside = false;
+
+    // TODO not a good design
+    // this function is called by PainterActivity and store the handler for
+    // sending msg to bring tools panel up
+    public void setHandler(Handler handler) {
+        mHander4Parent = handler;
+    }
+
     private void touchStart(float x, float y) {
         mSX = x;
         mSY = y;
-        if(x > dm.widthPixels -minLength) {
-            if(isOutside == false){
-                mActiveBringToolsPanel = true;
-                mDeatDistance = 0;
-                isOutside = true;
-            }
-        }else{
+        // TODO here we only take screen portrait situation into consideration
+        if (x > mDisplayMetrics.widthPixels - MIN_WIDTH_FOR_MARK_TOOLS_PANEL_TRIGGER_START
+                && mStartToBringToolsPanel == false) {
+            mStartToBringToolsPanel = true;
+        } else {
             switch (mMode) {
                 case DrawingToolsManager.PAINT_MODE:
                     // backup current bitmap on paint board
@@ -217,18 +227,14 @@ public class PaintBoardView extends View implements INotifyReceiver {
             // TODO the next line is for test and need remove
         }
     }
-    private float mDeatDistance;
-    private boolean needToolbar = false;
+
     private void touchMove(float x, float y) {
-        if(mActiveBringToolsPanel) {
-            mDeatDistance = mSX -x;
-            if(mDeatDistance > minLength && isOutside == true) {
-              // 2 bring tools panel front of parent
-              Message msg = mHander4Parent.obtainMessage(PainterActivity.BORDER_TO_BACK);
-              isOutside = false;
-              mHander4Parent.sendMessage(msg);
-            }
-        }else{
+        if (mStartToBringToolsPanel
+                && (mSX - x) > MIN_MOVE_DISTANCE_FOR_TRIGGER_TOOLS_PANEL) {
+            // 2 bring tools panel front of parent
+            Message msg = mHander4Parent.obtainMessage(PainterActivity.BORDER_TO_BACK);
+            mHander4Parent.sendMessage(msg);
+        } else {
             switch (mMode) {
                 case DrawingToolsManager.PAINT_MODE:
                     doPaintModeMove(x, y);
@@ -246,10 +252,9 @@ public class PaintBoardView extends View implements INotifyReceiver {
     private void touchUp(float x, float y) {
         // TODO
         // new IDrawable object and add to
-        if(mActiveBringToolsPanel){
-            mActiveBringToolsPanel = false;
-        }
-        else{
+        if (mStartToBringToolsPanel) {
+            mStartToBringToolsPanel = false;
+        } else {
             switch (mMode) {
                 case DrawingToolsManager.PAINT_MODE:
                     doPaintModeUp(x, y);
