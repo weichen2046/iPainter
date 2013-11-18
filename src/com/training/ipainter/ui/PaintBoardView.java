@@ -435,12 +435,15 @@ public class PaintBoardView extends View implements INotifyReceiver {
             CompositeDrawable comp = new CompositeDrawable();
             IDrawable drawable = null;
             int index = -1;
+            List<Integer> indexes = new LinkedList<Integer>();
+            int removedCount = 0;
             // z-order is the same order with index in this list
             for (int i = 0; i < mDrawables4Composing.size(); i++) {
                 drawable = mDrawables4Composing.get(i);
                 // the last object in mDrawables4Composing
+                index = mDrawingHistories.indexOf(drawable);
+                indexes.add(index + removedCount);
                 if ((i + 1) == mDrawables4Composing.size()) {
-                    index = mDrawingHistories.indexOf(drawable);
                     // the composite drawable object's z-order in
                     // mDrawingHistories will equals to the last drawable object
                     // in mDrawables4Composing's z-order in mDrawingHistories
@@ -448,6 +451,7 @@ public class PaintBoardView extends View implements INotifyReceiver {
                     mDrawingHistories.add(index, new SelectBorderDecorator(comp));
                 }
                 mDrawingHistories.remove(drawable);
+                removedCount++;
                 if (drawable instanceof SelectBorderDecorator) {
                     comp.add(((SelectBorderDecorator) drawable).getDrawable());
                 } else {
@@ -456,6 +460,8 @@ public class PaintBoardView extends View implements INotifyReceiver {
                             "Error, not a SelectBorderDecorator is not a selected drawable");
                 }
             }
+            // TODO create undoable memento
+            mMementoManager.addCompositeMemento(comp, indexes, index);
             mDrawables4Composing.clear();
             // refresh current painter board
             redrawAllGraphicObjects();
@@ -476,6 +482,8 @@ public class PaintBoardView extends View implements INotifyReceiver {
                 // int insertIndex =
                 // mDrawingHistories.indexOf(mSelectedDrawable);
                 int insertIndex = indexOfDrawableIgnoreSelectBorderDecorator(mSelectedDrawable);
+                // TODO create undoable memento
+                mMementoManager.addDecompositeMemento(composites, insertIndex);
                 mDrawingHistories.remove(insertIndex);
                 for (IDrawable drawable : drawables) {
                     // do insert
@@ -484,7 +492,6 @@ public class PaintBoardView extends View implements INotifyReceiver {
                 // make last drawable selected
                 mSelectedDrawable = mDrawingHistories.remove(insertIndex - 1);
                 mDrawingHistories.add(new SelectBorderDecorator(mSelectedDrawable));
-                drawables.clear();
                 redrawAllGraphicObjects();
                 this.invalidate();
             }

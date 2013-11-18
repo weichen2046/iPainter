@@ -1,5 +1,6 @@
 package com.training.ipainter.model;
 
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Stack;
 
@@ -71,11 +72,31 @@ public class MementoManager {
                 mem.mDrawable.setBounds(data.mSrc);
                 break;
             case CREATE_UNDO_TYPE:
-                int index = Integer.valueOf(mem.mData.toString());
+                int index = ((Integer)mem.mData).intValue();
                 // if (undoMem.mDrawable != mDrawingHistories.get(index)) {
                 // // wrap by a SelectBorderDecorator
                 // }
                 mDrawingHistories.remove(index);
+                break;
+            case COMPOSITE_UNDO_TYPE:
+                CompositeMementoData compData = (CompositeMementoData) mem.mData;
+                CompositeDrawable compDrawable = (CompositeDrawable) mem.mDrawable;
+                int i = 0;
+                for(IDrawable drawable : compDrawable.getCompositedDrawables()) {
+                    mDrawingHistories.add(compData.mIndexes.get(i).intValue(), drawable);
+                    i++;
+                }
+                // remove the composable object
+                mDrawingHistories
+                    .remove(compData.mIndexes.get(i - 1).intValue() + 1);
+                break;
+            case DECOMPOSITE_UNDO_TYPE:
+                CompositeDrawable decompDrawable = (CompositeDrawable) mem.mDrawable;
+                for(IDrawable drawable : decompDrawable.getCompositedDrawables()) {
+                    removeDrawableIgnoreSelectBorderDecorator(drawable);
+                    //mDrawingHistories.remove(drawable);
+                }
+                mDrawingHistories.add(((Integer)mem.mData).intValue(), decompDrawable);
                 break;
             default:
                 break;
@@ -94,6 +115,24 @@ public class MementoManager {
                 int index = Integer.valueOf(mem.mData.toString());
                 mDrawingHistories.add(index, mem.mDrawable);
                 break;
+            case COMPOSITE_UNDO_TYPE:
+                CompositeMementoData compData = (CompositeMementoData) mem.mData;
+                int removedCount = 0;
+                for(Integer i : compData.mIndexes) {
+                    mDrawingHistories.remove(i.intValue() - removedCount);
+                    removedCount++;
+                }
+                // add the composable object
+                mDrawingHistories.add(compData.mComposableIndex, mem.mDrawable);
+                break;
+            case DECOMPOSITE_UNDO_TYPE:
+                CompositeDrawable decompDrawable = (CompositeDrawable) mem.mDrawable;
+                int insertIndex = ((Integer)mem.mData).intValue();
+                for(IDrawable drawable : decompDrawable.getCompositedDrawables()) {
+                    mDrawingHistories.add(insertIndex++, drawable);
+                }
+                mDrawingHistories.remove(insertIndex);
+                break;
             default:
                 break;
         }
@@ -106,6 +145,7 @@ public class MementoManager {
         mem.mUndoableType = POSITION_CHANGE_UNDO_TYPE;
         mem.mData = new PositionChangeMementoData(mPrevRect, mCurrentRect);
         mUndos.push(mem);
+        disableRedo();
     }
 
     public void addCreationMemento(IDrawable drawable, int index) {
@@ -114,6 +154,42 @@ public class MementoManager {
         mem.mUndoableType = CREATE_UNDO_TYPE;
         mem.mData = index;
         mUndos.push(mem);
+        disableRedo();
+    }
+
+    public void addCompositeMemento(IDrawable drawable, List<Integer> indexes, int compIndex) {
+        Memento mem = new Memento();
+        mem.mDrawable = drawable;
+        mem.mUndoableType = COMPOSITE_UNDO_TYPE;
+        mem.mData = new CompositeMementoData(indexes, compIndex);
+        mUndos.push(mem);
+        disableRedo();
+    }
+
+    public void addDecompositeMemento(IDrawable drawable, int index) {
+        Memento mem = new Memento();
+        mem.mDrawable = drawable;
+        mem.mUndoableType = DECOMPOSITE_UNDO_TYPE;
+        mem.mData = index;
+        mUndos.push(mem);
+        disableRedo();
+    }
+
+    private void disableRedo() {
+        mRedos.clear();
+    }
+
+    private void removeDrawableIgnoreSelectBorderDecorator(IDrawable drawable) {
+        IDrawable needRemove = drawable;
+        for(IDrawable drawObj : mDrawingHistories) {
+            if((drawObj == drawable)
+                || (drawObj instanceof SelectBorderDecorator
+                    && (((SelectBorderDecorator)drawObj).getDrawable() == drawable))) {
+                needRemove = drawObj;
+                break;
+            }
+        }
+        mDrawingHistories.remove(needRemove);
     }
 
     public class Memento {
@@ -131,6 +207,16 @@ public class MementoManager {
             mSrc.set(src);
             mDest = new Rect();
             mDest.set(dest);
+        }
+    }
+
+    class CompositeMementoData {
+        public List<Integer> mIndexes;
+        public int mComposableIndex;
+
+        public CompositeMementoData(List<Integer> indexes, int compIndex) {
+            mIndexes = indexes;
+            mComposableIndex = compIndex;
         }
     }
 }

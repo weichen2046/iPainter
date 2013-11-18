@@ -41,6 +41,15 @@ public class CompositeDrawable extends Shape {
         return false;
     }
 
+    @Override
+    public void setBounds(Rect rect) {
+        // TODO we don't take scale change now, just position change here
+        // add just all drawable object be composited
+        int dx = rect.left - mBounds.left;
+        int dy = rect.top - mBounds.top;
+        adjustPosition(dx, dy);
+    }
+
     /**
      * the z-order of drawables according to the order they be added.
      */
