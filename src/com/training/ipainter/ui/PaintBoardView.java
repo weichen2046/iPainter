@@ -65,7 +65,7 @@ public class PaintBoardView extends View implements INotifyReceiver {
     // if finger moved distance larger than
     // MIN_MOVE_DISTANCE_FOR_TRIGGER_TOOLS_PANEL and tools panel be marked to
     // show up, then we start to bring tools panel show up
-    private static final int MIN_MOVE_DISTANCE_FOR_TRIGGER_TOOLS_PANEL = 20;
+    private static final int MIN_MOVE_DISTANCE_FOR_TRIGGER_TOOLS_PANEL = 10;
     // if the distance between finger start point and right side of the screen
     // we mark tools panel to be show up to true, 8 is a expeirential value
     private static final int MIN_WIDTH_FOR_MARK_TOOLS_PANEL_TRIGGER_START = 8;
