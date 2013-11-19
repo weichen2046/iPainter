@@ -3,6 +3,8 @@
  */
 package com.training.ipainter.ui;
 
+import java.lang.ref.WeakReference;
+
 import android.app.Activity;
 import android.os.Bundle;
 import android.os.Handler;
@@ -30,27 +32,9 @@ public class PainterActivity extends Activity {
     private static final int UNDO_MENU = Menu.FIRST + 3;
     private static final int REDO_MENU = Menu.FIRST + 4;
     private MementoManager mMementoManager;
-    @SuppressWarnings("unused")
-    private Handler mHander = new Handler() {
 
-        @Override
-        public void handleMessage(Message msg) {
-            switch(msg.what) {
-                case BORDER_TO_BACK:
-                    mToolbarPanel.bringToFront();
-                    Log.v("TAG","handle scrollToScreen(1)");
-                    mToolbarPanel.scrollToScreen(1);
-                    break;
-                case TOOLS_TO_BACK:
-                    mBoarderView.bringToFront();
-                    Log.v("TAG","handle scrollToScreen(2)");
-                    mToolbarPanel.scrollToScreen(2);
-                    break;
-                default:
-                    break;
-            }
-        }
-    };
+    private MyHandler mHander;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -58,6 +42,7 @@ public class PainterActivity extends Activity {
         setContentView(R.layout.main);
         mToolbarPanel = (ToolbarLayout)findViewById(R.id.my_scrollLayout);
         mBoarderView = (PaintBoardView)findViewById(R.id.paint_border);
+        mHander = new MyHandler(this);
         mBoarderView.setHandler(mHander);
         mToolbarPanel.setHandler(mHander);
         mMementoManager = MementoManager.getInstance();
@@ -142,6 +127,41 @@ public class PainterActivity extends Activity {
                 break;
         }
         return true;
+    }
+
+    // Handler must be static or it will lead memory leak, see the reference
+    // below
+    // http://stackoverflow.com/questions/11407943/this-handler-class-should-be-static-or-leaks-might-occur-incominghandler
+    // https://groups.google.com/forum/#!msg/android-developers/1aPZXZG6kWk/lIYDavGYn5UJ
+    static class MyHandler extends Handler {
+
+        private final WeakReference<PainterActivity> mActivity;
+
+        MyHandler(PainterActivity activity) {
+            mActivity = new WeakReference<PainterActivity>(activity);
+        }
+
+        @Override
+        public void handleMessage(Message msg) {
+            PainterActivity activity = mActivity.get();
+            if (activity != null) {
+                switch (msg.what) {
+                    case BORDER_TO_BACK:
+                        activity.mToolbarPanel.bringToFront();
+                        Log.v("TAG", "handle scrollToScreen(1)");
+                        activity.mToolbarPanel.scrollToScreen(1);
+                        break;
+                    case TOOLS_TO_BACK:
+                        activity.mBoarderView.bringToFront();
+                        Log.v("TAG", "handle scrollToScreen(2)");
+                        activity.mToolbarPanel.scrollToScreen(2);
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+
     }
 
 }
