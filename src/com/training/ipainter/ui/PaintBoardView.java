@@ -61,7 +61,8 @@ public class PaintBoardView extends View implements INotifyReceiver {
     // handler for bring tools panel up, defined in PainterActivity
     private Handler mHander4Parent;
     private DisplayMetrics mDisplayMetrics = getResources().getDisplayMetrics();
-    private boolean mStartToBringToolsPanel = false;
+    private boolean mMark4BringToolsPanelFront = false;
+    private boolean mHasSentMsgBringToolsPanelFront;
     // if finger moved distance larger than
     // MIN_MOVE_DISTANCE_FOR_TRIGGER_TOOLS_PANEL and tools panel be marked to
     // show up, then we start to bring tools panel show up
@@ -209,8 +210,9 @@ public class PaintBoardView extends View implements INotifyReceiver {
         mSY = y;
         // TODO here we only take screen portrait situation into consideration
         if (x > mDisplayMetrics.widthPixels - MIN_WIDTH_FOR_MARK_TOOLS_PANEL_TRIGGER_START
-                && mStartToBringToolsPanel == false) {
-            mStartToBringToolsPanel = true;
+                && mMark4BringToolsPanelFront == false) {
+            mMark4BringToolsPanelFront = true;
+            mHasSentMsgBringToolsPanelFront = false;
         } else {
             switch (mMode) {
                 case DrawingToolsManager.PAINT_MODE:
@@ -229,11 +231,14 @@ public class PaintBoardView extends View implements INotifyReceiver {
     }
 
     private void touchMove(float x, float y) {
-        if (mStartToBringToolsPanel
-                && (mSX - x) > MIN_MOVE_DISTANCE_FOR_TRIGGER_TOOLS_PANEL) {
-            // 2 bring tools panel front of parent
-            Message msg = mHander4Parent.obtainMessage(PainterActivity.BORDER_TO_BACK);
-            mHander4Parent.sendMessage(msg);
+        if (mMark4BringToolsPanelFront) {
+            if ((mSX - x) > MIN_MOVE_DISTANCE_FOR_TRIGGER_TOOLS_PANEL
+                    && !mHasSentMsgBringToolsPanelFront) {
+                mHasSentMsgBringToolsPanelFront = true;
+                // 2 bring tools panel front of parent
+                Message msg = mHander4Parent.obtainMessage(PainterActivity.BORDER_TO_BACK);
+                mHander4Parent.sendMessage(msg);
+            }
         } else {
             switch (mMode) {
                 case DrawingToolsManager.PAINT_MODE:
@@ -251,21 +256,21 @@ public class PaintBoardView extends View implements INotifyReceiver {
 
     private void touchUp(float x, float y) {
         // TODO
+        if (mMark4BringToolsPanelFront) {
+            mMark4BringToolsPanelFront = false;
+            return;
+        }
         // new IDrawable object and add to
-        if (mStartToBringToolsPanel) {
-            mStartToBringToolsPanel = false;
-        } else {
-            switch (mMode) {
-                case DrawingToolsManager.PAINT_MODE:
-                    doPaintModeUp(x, y);
-                    break;
-                case DrawingToolsManager.SELECT_MODE:
-                    doSelectModeUp(x, y);
-                    break;
-                default:
-                    Log.d(TAG, "Unknown mode in touch_up.");
-                    break;
-            }
+        switch (mMode) {
+            case DrawingToolsManager.PAINT_MODE:
+                doPaintModeUp(x, y);
+                break;
+            case DrawingToolsManager.SELECT_MODE:
+                doSelectModeUp(x, y);
+                break;
+            default:
+                Log.d(TAG, "Unknown mode in touch_up.");
+                break;
         }
     }
 
