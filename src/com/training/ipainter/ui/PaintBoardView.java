@@ -58,19 +58,6 @@ public class PaintBoardView extends View implements INotifyReceiver {
 
     private MementoManager mMementoManager;
 
-    // handler for bring tools panel up, defined in PainterActivity
-    private Handler mHander4Parent;
-    private DisplayMetrics mDisplayMetrics = getResources().getDisplayMetrics();
-    private boolean mMark4BringToolsPanelFront = false;
-    private boolean mHasSentMsgBringToolsPanelFront;
-    // if finger moved distance larger than
-    // MIN_MOVE_DISTANCE_FOR_TRIGGER_TOOLS_PANEL and tools panel be marked to
-    // show up, then we start to bring tools panel show up
-    private static final int MIN_MOVE_DISTANCE_FOR_TRIGGER_TOOLS_PANEL = 10;
-    // if the distance between finger start point and right side of the screen
-    // we mark tools panel to be show up to true, 8 is a expeirential value
-    private static final int MIN_WIDTH_FOR_MARK_TOOLS_PANEL_TRIGGER_START = 8;
-
     // use to rectify rect coordinate to keep left always not large than right
     // and top always not large than bottom
     private RectCoordinateCorrector mRectCoordinateCorrector;
@@ -198,68 +185,38 @@ public class PaintBoardView extends View implements INotifyReceiver {
         }
     }
 
-    // TODO not a good design
-    // this function is called by PainterActivity and store the handler for
-    // sending msg to bring tools panel up
-    public void setHandler(Handler handler) {
-        mHander4Parent = handler;
-    }
-
     private void touchStart(float x, float y) {
         mSX = x;
         mSY = y;
-        // TODO here we only take screen portrait situation into consideration
-        if (x > mDisplayMetrics.widthPixels - MIN_WIDTH_FOR_MARK_TOOLS_PANEL_TRIGGER_START
-                && mMark4BringToolsPanelFront == false) {
-            mMark4BringToolsPanelFront = true;
-            mHasSentMsgBringToolsPanelFront = false;
-        } else {
-            switch (mMode) {
-                case DrawingToolsManager.PAINT_MODE:
-                    // backup current bitmap on paint board
-                    mCanvas4Backup.drawBitmap(mBitmap, 0, 0, null);
-                    break;
-                case DrawingToolsManager.SELECT_MODE:
-                    doSelectModeStart(x, y);
-                    break;
-                default:
-                    Log.d(TAG, "Unknown mode in touchStart.");
-                    break;
-            }
-            // TODO the next line is for test and need remove
+
+        switch (mMode) {
+        case DrawingToolsManager.PAINT_MODE:
+            doPaintModeStart(x, y);
+            break;
+        case DrawingToolsManager.SELECT_MODE:
+            doSelectModeStart(x, y);
+            break;
+        default:
+            Log.d(TAG, "Unknown mode in touchStart.");
+            break;
         }
     }
 
     private void touchMove(float x, float y) {
-        if (mMark4BringToolsPanelFront) {
-            if ((mSX - x) > MIN_MOVE_DISTANCE_FOR_TRIGGER_TOOLS_PANEL
-                    && !mHasSentMsgBringToolsPanelFront) {
-                mHasSentMsgBringToolsPanelFront = true;
-                // 2 bring tools panel front of parent
-                Message msg = mHander4Parent.obtainMessage(PainterActivity.BORDER_TO_BACK);
-                mHander4Parent.sendMessage(msg);
-            }
-        } else {
-            switch (mMode) {
-                case DrawingToolsManager.PAINT_MODE:
-                    doPaintModeMove(x, y);
-                    break;
-                case DrawingToolsManager.SELECT_MODE:
-                    doSelectModeMove(x, y);
-                    break;
-                default:
-                    Log.d(TAG, "Unknown mode in touch_move.");
-                    break;
-            }
+        switch (mMode) {
+        case DrawingToolsManager.PAINT_MODE:
+            doPaintModeMove(x, y);
+            break;
+        case DrawingToolsManager.SELECT_MODE:
+            doSelectModeMove(x, y);
+            break;
+        default:
+            Log.d(TAG, "Unknown mode in touch_move.");
+            break;
         }
     }
 
     private void touchUp(float x, float y) {
-        // TODO
-        if (mMark4BringToolsPanelFront) {
-            mMark4BringToolsPanelFront = false;
-            return;
-        }
         // new IDrawable object and add to
         switch (mMode) {
             case DrawingToolsManager.PAINT_MODE:
@@ -272,6 +229,15 @@ public class PaintBoardView extends View implements INotifyReceiver {
                 Log.d(TAG, "Unknown mode in touch_up.");
                 break;
         }
+    }
+
+    private void doPaintModeStart(float x, float y) {
+        // not allow composable or decomposable
+        mToolsManager
+                .setComposableStatus(DrawingToolsManager.COMPOSABLE_DECOMPOSABLE_BOTH_DISABLE);
+
+        // backup current bitmap on paint board
+        mCanvas4Backup.drawBitmap(mBitmap, 0, 0, null);
     }
 
     private void doSelectModeStart(float x, float y) {

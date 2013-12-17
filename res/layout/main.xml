@@ -2,74 +2,88 @@
     android:layout_width="fill_parent"
     android:layout_height="fill_parent" >
 
-     <com.training.ipainter.ui.ToolbarLayout
-         android:layout_width="match_parent"
-         android:orientation="vertical"
-         android:id="@+id/my_scrollLayout"
-         android:layout_height="match_parent">
-         <LinearLayout
-             android:id="@+id/layout3"
-             android:layout_width="match_parent"
-             android:layout_height="match_parent"
-             android:background="#aaa"
-             android:orientation="vertical" >
-             <TextView
+    <com.training.ipainter.ui.ToolbarLayout
+        android:id="@+id/my_scrollLayout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical" >
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="0dip"
+            android:layout_weight="1"/>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dip"
+            android:layout_weight="5"
+            android:background="#ffa9ebf5"
+            android:orientation="vertical" >
+
+            <TextView
+                android:id="@+id/text"
                 android:layout_width="130dip"
                 android:layout_height="wrap_content"
-                android:id="@+id/text"
-                android:text="工具栏"
-                android:textSize="18pt"
-                android:textIsSelectable="true"/>
-			 <Button
-                 android:id="@+id/brushLine"
-                 android:layout_width="130dip"
-                 android:layout_height="wrap_content"
-                 android:text="line" />
-             <Button
-                 android:id="@+id/brushRect"
-                 android:layout_width="130dip"
-                 android:layout_height="wrap_content"
-                 android:text="rect" />
-             <Button
-                 android:id="@+id/brushCircle"
-                 android:layout_width="130dip"
-                 android:layout_height="wrap_content"
-                 android:text="circle" />
-              <Button
-                 android:id="@+id/mode"
-                 android:layout_width="130dip"
-                 android:layout_height="wrap_content"
-                 android:text="selection" />
+                android:text="@string/tools_panel_title"
+                android:textIsSelectable="true"
+                android:textSize="18pt" />
+
+            <Button
+                android:id="@+id/brushLine"
+                android:layout_width="130dip"
+                android:layout_height="wrap_content"
+                android:text="line" />
+
+            <Button
+                android:id="@+id/brushRect"
+                android:layout_width="130dip"
+                android:layout_height="wrap_content"
+                android:text="rect" />
+
+            <Button
+                android:id="@+id/brushCircle"
+                android:layout_width="130dip"
+                android:layout_height="wrap_content"
+                android:text="circle" />
+
+            <Button
+                android:id="@+id/mode_changer"
+                android:layout_width="130dip"
+                android:layout_height="wrap_content"
+                android:text="@string/mode_select" />
+
             <Button
                 android:id="@+id/colorPicker"
                 android:layout_width="130dip"
                 android:layout_height="wrap_content"
-                android:text="colorPicker" />
+                android:text="@string/color_picker" />
+
             <Button
                 android:id="@+id/composite"
                 android:layout_width="130dip"
                 android:layout_height="wrap_content"
-                android:text="组合" />
-            <Button
-                android:id="@+id/decomposite"
-                android:layout_width="130dip"
-                android:layout_height="wrap_content"
-                android:text="拆分" />
+                android:text="@string/composite" />
+
             <Button
                 android:id="@+id/undo"
                 android:layout_width="130dip"
                 android:layout_height="wrap_content"
-                android:text="撤销" />
+                android:text="@string/undo" />
+
             <Button
                 android:id="@+id/redo"
                 android:layout_width="130dip"
                 android:layout_height="wrap_content"
-                android:text="重做" />
-         </LinearLayout>
-     </com.training.ipainter.ui.ToolbarLayout>
-    <com.training.ipainter.ui.PaintBoardView 
+                android:text="@string/redo" />
+        </LinearLayout>
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="0dip"
+            android:layout_weight="1"/>
+    </com.training.ipainter.ui.ToolbarLayout>
+
+    <com.training.ipainter.ui.PaintBoardView
+        android:id="@+id/paint_border"
         android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
-        android:id="@+id/paint_border" />
+        android:layout_height="fill_parent" />
 
 </FrameLayout>

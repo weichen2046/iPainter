@@ -10,5 +10,7 @@
     <string name="composable_not_available">Composite/Decomposite Disable</string>
     <string name="undo">Undo</string>
     <string name="redo">Redo</string>
+    <string name="tools_panel_title">Tools Panel</string>
+    <string name="color_picker">ColorPicker</string>
 
 </resources>
