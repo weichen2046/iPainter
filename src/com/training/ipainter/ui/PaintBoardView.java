@@ -12,10 +12,7 @@ import android.graphics.Paint;
 import android.graphics.Paint.Style;
 import android.graphics.PathEffect;
 import android.graphics.Rect;
-import android.os.Handler;
-import android.os.Message;
 import android.util.AttributeSet;
-import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
@@ -24,12 +21,12 @@ import com.training.ipainter.drawingtools.DrawingToolsManager;
 import com.training.ipainter.drawingtools.DrawingToolsManager.INotifyReceiver;
 import com.training.ipainter.model.CompositeDrawable;
 import com.training.ipainter.model.DrawableDecorator;
+import com.training.ipainter.model.Ellipse;
 import com.training.ipainter.model.IDrawable;
 import com.training.ipainter.model.MementoManager;
 import com.training.ipainter.model.Rectangle;
 import com.training.ipainter.model.SelectBorderDecorator;
-import com.training.ipainter.model.Shape;
-import com.training.ipainter.utils.RectCoordinateCorrector;
+import com.training.ipainter.utils.RectUtil;
 
 public class PaintBoardView extends View implements INotifyReceiver {
 
@@ -60,7 +57,7 @@ public class PaintBoardView extends View implements INotifyReceiver {
 
     // use to rectify rect coordinate to keep left always not large than right
     // and top always not large than bottom
-    private RectCoordinateCorrector mRectCoordinateCorrector;
+    private RectUtil mRectUtil;
 
     public PaintBoardView(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -70,7 +67,7 @@ public class PaintBoardView extends View implements INotifyReceiver {
         mDrawables4Composing = new LinkedList<IDrawable>();
         mRectDirty = new Rect();
         mMode = DrawingToolsManager.UNKNOWN_MODE;
-        mRectCoordinateCorrector = new RectCoordinateCorrector();
+        mRectUtil = new RectUtil();
         mMementoManager = MementoManager.getInstance();
         mMementoManager.setDrawingHistories(mDrawingHistories);
 
@@ -295,26 +292,28 @@ public class PaintBoardView extends View implements INotifyReceiver {
 
     private void doPaintModeMove(float x, float y) {
         // TODO can refactor to use region or rect for efficiency
+
+        // 1 we convert float to int here
+        // because we only save these int values in our Rectangle
+        // when finger up
+        // 2 we intentionally shrink the rectangle by 1 pix here
+        // to avoid the dash rectangle always showing when we fill
+        // the same size of rectangle
+        mRectUtil.rectifyCoordinate((int) mSX, (int) mSY, (int) x, (int) y);
+        mRectUtil.inflate(-1, -1);
+        // the next line will erase the temporary dash shape
         mCanvas.drawBitmap(mBitmap4Backup, 0, 0, null);
+
         switch (mBrushType) {
             case DrawingToolsManager.BRUSH_LINE:
                 break;
             case DrawingToolsManager.BRUSH_RECT:
-                // 1 we convert float to int here
-                // because we only save these int values in our Rectangle
-                // when finger up
-                // 2 we intentionally shrink the rectangle by 1 pix here
-                // to avoid the dash rectangle always showing when we fill
-                // the same size of rectangle
-                mRectCoordinateCorrector.rectifyCoordinate((int) mSX, (int) mSY, (int) x, (int) y);
-                mCanvas.drawRect(mRectCoordinateCorrector.mLeft + 1,
-                        mRectCoordinateCorrector.mTop + 1,
-                        mRectCoordinateCorrector.mRight - 1,
-                        mRectCoordinateCorrector.mBottom - 1,
-                        mDashPaint);
+                mCanvas.drawRect(mRectUtil.mRect, mDashPaint);
                 this.invalidate();
                 break;
             case DrawingToolsManager.BRUSH_CIRCLE:
+                mCanvas.drawOval(mRectUtil.mRectF, mDashPaint);
+                this.invalidate();
                 break;
             default:
                 Log.d(TAG, "Unknown brush type.");
@@ -350,26 +349,25 @@ public class PaintBoardView extends View implements INotifyReceiver {
     private void doPaintModeUp(float x, float y) {
         // TODO need refactoring for using Factory Pattern
         IDrawable drawable = null;
+        mRectUtil.rectifyCoordinate((int) mSX, (int) mSY, (int) x, (int) y);
+
         switch (mBrushType) {
-        case DrawingToolsManager.BRUSH_LINE:
-            break;
-        case DrawingToolsManager.BRUSH_RECT:
-            mCanvas.drawRect((int) mSX, (int) mSY, (int) x, (int) y, mPaint);
-            mRectCoordinateCorrector.rectifyCoordinate((int) mSX, (int) mSY,
-                    (int) x, (int) y);
-            drawable = new Rectangle(mRectCoordinateCorrector.mLeft,
-                    mRectCoordinateCorrector.mTop,
-                    mRectCoordinateCorrector.mRight,
-                    mRectCoordinateCorrector.mBottom);
-            drawable.setPaint(mPaint);
-            break;
-        case DrawingToolsManager.BRUSH_CIRCLE:
-            break;
-        default:
-            Log.d(TAG, "Unknown brush type.");
-            break;
+            case DrawingToolsManager.BRUSH_LINE:
+                break;
+            case DrawingToolsManager.BRUSH_RECT:
+                mCanvas.drawRect((int) mSX, (int) mSY, (int) x, (int) y, mPaint);
+                drawable = new Rectangle(mRectUtil.mRect);
+                break;
+            case DrawingToolsManager.BRUSH_CIRCLE:
+                mCanvas.drawOval(mRectUtil.mRectF, mPaint);
+                drawable = new Ellipse(mRectUtil.mRectF);
+                break;
+            default:
+                Log.d(TAG, "Unknown brush type.");
+                break;
         }
         if (drawable != null) {
+            drawable.setPaint(mPaint);
             mDrawingHistories.add(drawable);
             Log.d(TAG, "new drawable object added, now size is: "
                     + mDrawingHistories.size());
@@ -385,7 +383,7 @@ public class PaintBoardView extends View implements INotifyReceiver {
         if (mIsSelectMultiple) {
             // erase the dash rect
             // make all drawable object wrap with SelectedBorderDecorator
-            Rect dashRect = Shape.getNormalRect((int) mSX, (int) mSY, (int) x, (int) y);
+            Rect dashRect = RectUtil.getNormalRect((int) mSX, (int) mSY, (int) x, (int) y);
 
             IDrawable drawable = null;
             mDrawables4Composing.clear();

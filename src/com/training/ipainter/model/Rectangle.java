@@ -26,14 +26,4 @@ public class Rectangle extends Shape {
         canvas.drawRect(mBounds, mPaint);
     }
 
-    @Override
-    public void adjustPosition(int dx, int dy) {
-        mBounds.offset(dx, dy);
-    }
-
-    @Override
-    public boolean isIntersectWith(Rect rect) {
-        return rect.intersects(mBounds, rect);
-    }
-
 }

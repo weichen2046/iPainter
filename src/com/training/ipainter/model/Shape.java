@@ -5,8 +5,6 @@ package com.training.ipainter.model;
 
 import android.graphics.Rect;
 
-import com.training.ipainter.utils.RectCoordinateCorrector;
-
 /**
  * @author chenwei
  *
@@ -23,22 +21,14 @@ public abstract class Shape extends GraphicObject {
         return GRAPHIC_SHAPE_TYPE;
     }
 
-    /**
-     * return a rect that left always not large than right and top always not
-     * large than bottom.
-     * 
-     * @param startX
-     * @param startY
-     * @param endX
-     * @param endY
-     * @return
-     */
-    public static Rect getNormalRect(int sX, int sY, int eX, int eY) {
-        RectCoordinateCorrector corrector = new RectCoordinateCorrector();
-        corrector.rectifyCoordinate(sX, sY, eX, eY);
+    @Override
+    public void adjustPosition(int dx, int dy) {
+        mBounds.offset(dx, dy);
+    }
 
-        return new Rect(corrector.mLeft, corrector.mTop,
-                corrector.mRight, corrector.mBottom);
+    @Override
+    public boolean isIntersectWith(Rect rect) {
+        return Rect.intersects(mBounds, rect);
     }
 
 }
