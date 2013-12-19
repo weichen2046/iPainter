@@ -23,6 +23,7 @@ import com.training.ipainter.model.CompositeDrawable;
 import com.training.ipainter.model.DrawableDecorator;
 import com.training.ipainter.model.Ellipse;
 import com.training.ipainter.model.IDrawable;
+import com.training.ipainter.model.Line;
 import com.training.ipainter.model.MementoManager;
 import com.training.ipainter.model.Rectangle;
 import com.training.ipainter.model.SelectBorderDecorator;
@@ -306,19 +307,19 @@ public class PaintBoardView extends View implements INotifyReceiver {
 
         switch (mBrushType) {
             case DrawingToolsManager.BRUSH_LINE:
+                mCanvas.drawLine(mSX, mSY, x, y, mDashPaint);
                 break;
             case DrawingToolsManager.BRUSH_RECT:
                 mCanvas.drawRect(mRectUtil.mRect, mDashPaint);
-                this.invalidate();
                 break;
             case DrawingToolsManager.BRUSH_CIRCLE:
                 mCanvas.drawOval(mRectUtil.mRectF, mDashPaint);
-                this.invalidate();
                 break;
             default:
                 Log.d(TAG, "Unknown brush type.");
                 break;
         }
+        this.invalidate();
     }
 
     private void doSelectModeMove(float x, float y) {
@@ -353,6 +354,8 @@ public class PaintBoardView extends View implements INotifyReceiver {
 
         switch (mBrushType) {
             case DrawingToolsManager.BRUSH_LINE:
+                mCanvas.drawLine(mSX, mSY, x, y, mPaint);
+                drawable = new Line((int) mSX, (int) mSY, (int) x, (int) y);
                 break;
             case DrawingToolsManager.BRUSH_RECT:
                 mCanvas.drawRect((int) mSX, (int) mSY, (int) x, (int) y, mPaint);

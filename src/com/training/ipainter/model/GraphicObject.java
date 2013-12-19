@@ -37,6 +37,7 @@ public abstract class GraphicObject implements IDrawable {
     }
 
     public void adjustPosition(int dx, int dy) {
+        mBounds.offset(dx, dy);
     }
 
     public abstract int getGraphicObjType();

@@ -31,19 +31,19 @@
                 android:id="@+id/brushLine"
                 android:layout_width="130dip"
                 android:layout_height="wrap_content"
-                android:text="line" />
+                android:text="@string/line_brush" />
 
             <Button
                 android:id="@+id/brushRect"
                 android:layout_width="130dip"
                 android:layout_height="wrap_content"
-                android:text="rect" />
+                android:text="@string/rect_brush" />
 
             <Button
                 android:id="@+id/brushCircle"
                 android:layout_width="130dip"
                 android:layout_height="wrap_content"
-                android:text="circle" />
+                android:text="@string/oval_brush" />
 
             <Button
                 android:id="@+id/mode_changer"

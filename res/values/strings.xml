@@ -12,5 +12,8 @@
     <string name="redo">Redo</string>
     <string name="tools_panel_title">Tools Panel</string>
     <string name="color_picker">ColorPicker</string>
+    <string name="line_brush">Line</string>
+    <string name="rect_brush">Rect</string>
+    <string name="oval_brush">Circal/Ellipse</string>
 
 </resources>

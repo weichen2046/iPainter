@@ -10,4 +10,7 @@
     <string name="redo">重做</string>
     <string name="tools_panel_title">工具栏</string>
     <string name="color_picker">颜色选择器</string>
+    <string name="line_brush">画线</string>
+    <string name="rect_brush">画矩形</string>
+    <string name="oval_brush">画圆或椭圆</string>
 </resources>
