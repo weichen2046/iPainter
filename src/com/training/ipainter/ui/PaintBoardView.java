@@ -49,6 +49,8 @@ public class PaintBoardView extends View implements INotifyReceiver {
     private float mPX;
     private float mPY;
     private boolean mIsSelectMultiple;
+    private boolean mDragStarted;
+    private boolean mDragStartCountdown;
 
     private DrawingToolsManager mToolsManager;
     private List<IDrawable> mDrawingHistories;
@@ -239,6 +241,7 @@ public class PaintBoardView extends View implements INotifyReceiver {
     }
 
     private void doSelectModeStart(float x, float y) {
+        Log.d(TAG, String.format("doSelectModeStart, x: %f, y: %f", x, y));
         // if is select mode, we need to check is any drawable object
         // under start point
         // if has one drawable object under this point we can move it
@@ -260,6 +263,35 @@ public class PaintBoardView extends View implements INotifyReceiver {
         mSelectedDrawable = getFirstDrawableOnPoint((int) x, (int) y);
         if (mSelectedDrawable != null) {
             mMementoManager.setPrevRect(mSelectedDrawable.getBounds());
+            mDragStarted = false;
+            mDragStartCountdown = true;
+            this.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    if (mDragStartCountdown) {
+                        Log.d(TAG, "DingDong, drag starting...");
+                        mDragStarted = true;
+                        mDragStartCountdown = false;
+
+                        // remove current selected drawable object from
+                        // histories
+
+                        // replace current selected drawable object by
+                        // dragable object, and add this dragable object to
+                        // histories
+
+                        // dragable object does:
+                        // 1) record current position
+                        // 2) record current bounds
+                        // 3) inflate bounds to a fixed size, but some drawable
+                        // object like line need do additional adjust, e.g.
+                        // start
+                        // point and end point, we need to design a solution to
+                        // figure out these situations
+                        // 4) record positions when moving
+                    }
+                }
+            }, 1000);
             if (mSelectedDrawable instanceof DrawableDecorator) {
                 // TODO this route will never reach, must delete
             } else {
@@ -323,6 +355,7 @@ public class PaintBoardView extends View implements INotifyReceiver {
     }
 
     private void doSelectModeMove(float x, float y) {
+        Log.d(TAG, String.format("doSelectModeMove, x: %f, y: %f", x, y));
         // start select multiple GraphicObject, draw dash rect
         if (mIsSelectMultiple) {
             // the next line because we backup current paint board when
@@ -334,11 +367,18 @@ public class PaintBoardView extends View implements INotifyReceiver {
                     mDashPaint);
             this.invalidate();
         } else {
-            Log.d(TAG, "doSelectMode for one.");
+            if (((int) x != (int) mSX || (int) y != (int) mSY)
+                    && mDragStartCountdown) {
+                Log.d(TAG, "selected object moved, cancel drag start countdown.");
+                mDragStartCountdown = false;
+            } else if (mDragStarted) {
+
+            }
+            // Log.d(TAG, "doSelectMode for one.");
             // start move select GraphicObject
             float dx = x - mPX;
             float dy = y - mPY;
-            Log.d(TAG, String.format("dx: %d, dy: %d", (int) dx, (int) dy));
+            // Log.d(TAG, String.format("dx: %d, dy: %d", (int) dx, (int) dy));
             mSelectedDrawable.adjustPosition((int) dx, (int) dy);
             redrawAllGraphicObjects();
             this.invalidate();

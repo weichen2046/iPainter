@@ -10,6 +10,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.view.KeyEvent;
+import android.widget.LinearLayout;
 
 import com.training.ipainter.R;
 
@@ -21,6 +22,7 @@ public class PainterActivity extends Activity {
     private static final String TAG = "PainterActivity";
     private ToolbarLayout mToolbarPanel;
     private PaintBoardView mBoarderView;
+    private LinearLayout mQuickDeletePanel;
     protected static final int BORDER_TO_BACK = 1;
     protected static final int TOOLS_TO_BACK = 2;
     private boolean mIsToolsPanelFront;
@@ -34,6 +36,7 @@ public class PainterActivity extends Activity {
         setContentView(R.layout.main);
         mToolbarPanel = (ToolbarLayout)findViewById(R.id.my_scrollLayout);
         mBoarderView = (PaintBoardView)findViewById(R.id.paint_border);
+        mQuickDeletePanel = (LinearLayout) findViewById(R.id.quick_delete_panel);
         mHander = new MyHandler(this);
         mToolbarPanel.setHandler(mHander);
     }
@@ -85,6 +88,7 @@ public class PainterActivity extends Activity {
                     default:
                         break;
                 }
+                activity.mQuickDeletePanel.bringToFront();
             }
         }
 

@@ -1,6 +1,5 @@
 package com.training.ipainter.model;
 
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Stack;
 

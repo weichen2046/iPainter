@@ -1,4 +1,4 @@
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent" >
 
@@ -86,4 +86,15 @@
         android:layout_width="fill_parent"
         android:layout_height="fill_parent" />
 
-</FrameLayout>
+    <LinearLayout
+        android:id="@+id/quick_delete_panel"
+        android:layout_height="50dip"
+        android:layout_width="150dip"
+        android:orientation="horizontal"
+        android:background="#99ff0000"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:visibility="visible">
+    </LinearLayout>
+
+</RelativeLayout>

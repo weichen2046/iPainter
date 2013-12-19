@@ -3,14 +3,11 @@
  */
 package com.training.ipainter.model;
 
-import com.training.ipainter.utils.RectUtil;
-
-import android.R.integer;
 import android.graphics.Canvas;
-import android.graphics.Paint;
-import android.graphics.Paint.Style;
 import android.graphics.Point;
 import android.graphics.Rect;
+
+import com.training.ipainter.utils.RectUtil;
 
 /**
  * @author chenwei
@@ -45,6 +42,14 @@ public class Line extends GraphicObject {
         // by a line, a better implementation would be judge if a point locate
         // on a line and take line width into consideration.
         return mBounds.contains(x, y);
+    }
+
+    @Override
+    public void setBounds(Rect rect) {
+        super.setBounds(rect);
+        // additional reset the start and end points
+        mStart.set(rect.left, rect.top);
+        mEnd.set(rect.right, rect.bottom);
     }
 
     @Override
