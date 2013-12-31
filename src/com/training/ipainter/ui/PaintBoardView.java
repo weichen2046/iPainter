@@ -20,6 +20,7 @@ import android.view.View;
 import com.training.ipainter.drawingtools.DrawingToolsManager;
 import com.training.ipainter.drawingtools.DrawingToolsManager.INotifyReceiver;
 import com.training.ipainter.model.CompositeDrawable;
+import com.training.ipainter.model.DragableDecorator;
 import com.training.ipainter.model.DrawableDecorator;
 import com.training.ipainter.model.Ellipse;
 import com.training.ipainter.model.IDrawable;
@@ -240,7 +241,7 @@ public class PaintBoardView extends View implements INotifyReceiver {
         mCanvas4Backup.drawBitmap(mBitmap, 0, 0, null);
     }
 
-    private void doSelectModeStart(float x, float y) {
+    private void doSelectModeStart(final float x, final float y) {
         Log.d(TAG, String.format("doSelectModeStart, x: %f, y: %f", x, y));
         // if is select mode, we need to check is any drawable object
         // under start point
@@ -275,10 +276,21 @@ public class PaintBoardView extends View implements INotifyReceiver {
 
                         // remove current selected drawable object from
                         // histories
+                        // PaintBoardView.this.
+                        removeDrawableFromHistories(mSelectedDrawable);
+                        IDrawable drawable = mSelectedDrawable;
+                        if (mSelectedDrawable instanceof DrawableDecorator) {
+                            drawable =
+                                    ((DrawableDecorator)mSelectedDrawable).getDrawable();
+                        }
 
                         // replace current selected drawable object by
                         // dragable object, and add this dragable object to
                         // histories
+                        IDrawable dragable = new DragableDecorator(drawable,
+                                (int)x, (int)y);
+                        mDrawingHistories.add(dragable);
+                        mSelectedDrawable = dragable;
 
                         // dragable object does:
                         // 1) record current position
@@ -372,7 +384,6 @@ public class PaintBoardView extends View implements INotifyReceiver {
                 Log.d(TAG, "selected object moved, cancel drag start countdown.");
                 mDragStartCountdown = false;
             } else if (mDragStarted) {
-
             }
             // Log.d(TAG, "doSelectMode for one.");
             // start move select GraphicObject
@@ -465,15 +476,19 @@ public class PaintBoardView extends View implements INotifyReceiver {
                         .setComposableStatus(DrawingToolsManager.COMPOSABLE_ENABLE);
             }
         } else {
-            mMementoManager.setCurrentRect(mSelectedDrawable.getBounds());
-            if (!(mSelectedDrawable == null)
-                    && (mSelectedDrawable instanceof CompositeDrawable)) {
-                mToolsManager
-                        .setComposableStatus(DrawingToolsManager.DECOMPOSABLE_ENABLE);
-            }
-            // TODO create undoable memento
-            if (mMementoManager.isPositionChanged()) {
-                mMementoManager.addPositionChangedMemento(mSelectedDrawable);
+            if (mDragStarted) {
+                mDragStarted = false;
+            } else {
+                mMementoManager.setCurrentRect(mSelectedDrawable.getBounds());
+                if (!(mSelectedDrawable == null)
+                        && (mSelectedDrawable instanceof CompositeDrawable)) {
+                    mToolsManager
+                            .setComposableStatus(DrawingToolsManager.DECOMPOSABLE_ENABLE);
+                }
+                // TODO create undoable memento
+                if (mMementoManager.isPositionChanged()) {
+                    mMementoManager.addPositionChangedMemento(mSelectedDrawable);
+                }
             }
         }
     }
@@ -658,6 +673,11 @@ public class PaintBoardView extends View implements INotifyReceiver {
         return false;
     }
 
+    /**
+     * 
+     * @param drawable this drawable can be Decorator or not
+     * @return
+     */
     private int indexOfDrawableIgnoreSelectBorderDecorator(IDrawable drawable) {
         int index = 0;
         for (IDrawable drawObj : mDrawingHistories) {
@@ -671,6 +691,20 @@ public class PaintBoardView extends View implements INotifyReceiver {
             index++;
         }
         return -1;
+    }
+
+    /**
+     * 
+     * @param drawable this drawable can be Decorator or not
+     * @return
+     */
+    private boolean removeDrawableFromHistories(IDrawable drawable) {
+        int index = indexOfDrawableIgnoreSelectBorderDecorator(drawable);
+        if (index != -1) {
+            mDrawingHistories.remove(index);
+            return true;
+        }
+        return false;
     }
 
 }

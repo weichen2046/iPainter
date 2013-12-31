@@ -38,26 +38,6 @@ public class SelectBorderDecorator extends DrawableDecorator {
         }
     }
 
-    @Override
-    public void adjustPosition(int dx, int dy) {
-        mDrawable.adjustPosition(dx, dy);
-    }
-
-    @Override
-    public boolean containsPoint(int x, int y) {
-        return mDrawable.containsPoint(x, y);
-    }
-
-    @Override
-    public boolean isIntersectWith(Rect rect) {
-        return mDrawable.isIntersectWith(rect);
-    }
-
-    @Override
-    public void setBounds(Rect rect) {
-        mDrawable.setBounds(rect);
-    }
-
     private void drawSelectedMarksAroundTheBounds(Canvas canvas, Rect bounds,
            Paint paint) {
         // left top corner
